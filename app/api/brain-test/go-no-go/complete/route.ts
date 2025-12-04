@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Transform trials for scoring
-    const trials: BrainTestTrialData[] = dbSession.trials.map(t => {
+    const trials: BrainTestTrialData[] = dbSession.trials.map((t: any) => {
       const stimulus = t.stimulus as any;
       return {
         isCorrect: t.isCorrect,
