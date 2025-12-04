@@ -1,0 +1,1567 @@
+generator client {
+    provider = "prisma-client-js"
+    binaryTargets = ["native", "linux-musl-arm64-openssl-3.0.x"]
+    output = "/home/ubuntu/barrels_pwa/nextjs_space/node_modules/.prisma/client"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(uuid())
+  username        String    @unique
+  password        String?   // Optional - Phase 6 will use Whop OAuth instead
+  email           String?
+  name            String?
+  whopUserId      String?   @unique  // For Phase 6 Whop integration
+  
+  // Role & Access Control
+  role            String    @default("player") // "player", "coach", "admin"
+  isCoach         Boolean   @default(false)    // Quick check for coach access
+  
+  // Whop Membership Tracking (Phase 6)
+  whopMembershipId    String?   // Current Whop membership ID
+  membershipTier      String    @default("free") // "free", "starter", "performance", "hybrid", "pro"
+  membershipStatus    String    @default("inactive") // "active", "inactive", "cancelled", "expired"
+  membershipExpiresAt DateTime? // For subscription tracking
+  lastWhopSync        DateTime? // Last time we synced with Whop
+  
+  // POD Credits (Hybrid tier only - WO13)
+  podCreditsAvailable Int       @default(0)      // Current available POD credits
+  podCreditsUsed      Int       @default(0)      // Total POD credits used (historical)
+  podCreditsLastReset DateTime? // Last monthly reset (for Hybrid tier)
+  
+  // Assessment → VIP Offer Tracking (Work Order 13)
+  assessmentCompletedAt DateTime? // When user purchased an assessment
+  assessmentVipExpiresAt DateTime? // 60 days after assessment purchase
+  assessmentVipActive   Boolean   @default(false) // Is VIP offer currently active?
+  
+  // Diamond Kinetics Integration (WO15)
+  dkPlayerId        String?   // Diamond Kinetics player identifier for API lookups
+  
+  // Trial Membership Tracking (7-day free trial post-assessment)
+  trialTier           String?   // "athlete", "pro", "elite" - which tier trial
+  trialStartDate      DateTime? // When trial started
+  trialEndDate        DateTime? // When trial expires
+  trialUsed           Boolean   @default(false) // Has user already used their trial?
+  trialConvertedToPaid Boolean  @default(false) // Did they convert to paid?
+  
+  // Profile data from onboarding
+  dateOfBirth     DateTime?
+  height          Int?      // inches
+  weight          Int?      // lbs
+  bats            String?   // "Right", "Left", "Switch"
+  throws          String?   // "Right", "Left"
+  position        String?
+  level           String?   // "Youth (8-12)", "High School (13-18)", etc.
+  batLength       Int?      // inches
+  batWeight       Int?      // oz
+  batType         String?
+  
+  // Psychological questionnaire
+  struggles       String[]  @default([])
+  goals           String[]  @default([])
+  mentalApproach  String?   // "Aggressive", "Selective", "Balanced"
+  confidenceLevel Int?      // 1-10
+  
+  // Model Overlay Calibration
+  modelOverlayScale   Float? @default(1.0)
+  modelOverlayOffsetX Int?   @default(0)
+  modelOverlayOffsetY Int?   @default(0)
+  
+  // Reboot Motion Integration (Work Order - Reboot Import)
+  rebootAthleteId String? // Links this user to a Reboot athlete profile
+  
+  profileComplete Boolean   @default(false)
+  
+  // FTUE/Onboarding Tracking (Work Order #10)
+  completedOnboarding Boolean  @default(false)  // Has user finished FTUE flow?
+  onboardingVersion   String?  // "A", "B", "C" for A/B testing
+  onboardingStep      Int      @default(0)      // 0=not started, 1=profile, 2=first session, 3=complete
+  firstSessionCompleted Boolean @default(false) // Has user uploaded their first swing?
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  videos          Video[]
+  drillProgress   DrillProgress[]
+  assessments     Assessment[]
+  assessmentSessions AssessmentSession[] @relation("UserAssessmentSessions")
+  timingSessions  TimingSession[] @relation("UserTimingSessions")
+  s2Reports       S2CognitionReport[] @relation("UserS2Reports")
+  hittraxSessions HitTraxSession[] @relation("UserHitTraxSessions")
+  importSessions  ImportSession[]  @relation("UserImportSessions")
+  sensorSwings    SensorSwing[]    @relation("UserSensorSwings")
+  onTheBallHistory PlayerOnTheBallHistory[] @relation("UserOnTheBallHistory")
+  trainingSessions TrainingSession[] @relation("UserTrainingSessions")
+  playerLessons    PlayerLesson[] @relation("UserPlayerLessons")
+  brainTestSessions BrainTestSession[] @relation("UserBrainTestSessions")
+  supportTickets   SupportTicket[] @relation("UserSupportTickets")
+  podBookings      PodBooking[] @relation("UserPodBookings")
+}
+
+model Video {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionId       String?   // Optional - links video to a training session
+  session         TrainingSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  
+  playerLessonId  String?   // Optional - links video to a GOATY Player Lesson
+  playerLesson    PlayerLesson? @relation("PlayerLessonVideos", fields: [playerLessonId], references: [id], onDelete: SetNull)
+  
+  title           String    @default("My Swing")
+  videoType       String?   // "Tee Work", "Front Toss", "Live BP", "Game Swings", "Cage Work", "Other"
+  source          String    @default("upload") // "upload", "onform", "hudl", "other"
+  originalUrl     String?   // For imported videos (OnForm share link, Hudl link, etc.)
+  videoUrl        String    // S3 URL or mock URL
+  thumbnailUrl    String?   // Mock thumbnail
+  
+  // Swing Limits (WO13)
+  swingCount      Int       @default(0) // Number of swings analyzed in this video
+  swingLimit      Int?      // Max swings allowed (based on tier at upload time)
+  
+  // Video Processing for Joint Analysis
+  impactFrame     Int?      // Frame number where ball impact occurs
+  trimmedPath     String?   // S3 path to trimmed video (2s before/after impact)
+  fps             Float?    // Original video FPS (120-300 typically)
+  normalizedFps   Float     @default(60) // Normalized FPS for comparison (60 baseline)
+  
+  // Skeleton Data (JSON array of frame-by-frame joint coordinates)
+  skeletonData    Json?     // [{frame: 0, keypoints: [{x, y, z, visibility, name}, ...]}, ...]
+  skeletonExtracted Boolean @default(false)
+  skeletonStatus  String    @default("PENDING") // "PENDING" | "RUNNING" | "COMPLETE" | "FAILED"
+  skeletonErrorMessage String?  // Error details if extraction failed
+  
+  // Joint Data (Standardized format for joint overlay)
+  jointData          Json?     // Standardized joint format: [{timestamp, frameIndex, joints: [{name, x, y, z, confidence}]}]
+  jointAnalyzed      Boolean   @default(false)
+  jointAnalysisDate  DateTime?
+  jointAnalysisSource String?  // "mediapipe" | "abacus" - which system analyzed the joints
+  
+  // Analysis data - 4Bs Body Metrics (mock for prototype)
+  analyzed        Boolean   @default(false)
+  
+  // Main Metrics (0-100)
+  anchor          Int?      // 0-100 (Lower Body)
+  engine          Int?      // 0-100 (Trunk/Core)
+  whip            Int?      // 0-100 (Arms & Bat)
+  overallScore    Int?      // 0-100 (Average of 3 metrics)
+  tier            String?   // "Elite", "Advanced", "Intermediate", "Developing"
+  
+  // Anchor (Lower Body) Subcategories (0-100)
+  anchorStance              Int?  // Stance/Setup quality
+  anchorWeightShift         Int?  // Weight transfer efficiency
+  anchorGroundConnection    Int?  // Ground force connection
+  anchorLowerBodyMechanics  Int?  // Overall lower body movement
+  
+  // Engine (Trunk/Core) Subcategories (0-100)
+  engineHipRotation    Int?  // Hip rotation power
+  engineSeparation     Int?  // Upper/lower body separation
+  engineCorePower      Int?  // Core engagement
+  engineTorsoMechanics Int?  // Torso rotation quality
+  
+  // Whip (Arms & Bat) Subcategories (0-100)
+  whipArmPath      Int?  // Arm path efficiency
+  whipBatSpeed     Int?  // Bat speed generation
+  whipBatPath      Int?  // Bat path quality
+  whipConnection   Int?  // Arms-body connection
+  
+  exitVelocity    Int?      // mph
+  
+  // New Scoring Engine (Kwon/THSS aligned)
+  newScoringBreakdown Json?  // Full debug breakdown from new scoring engine
+  goatyBand           Int?   // -3 to +3 band from new scoring engine
+  
+  // AI Coach feedback
+  coachFeedback   String?
+  
+  // Advanced Video Player - A-B-C Timing Tags (THSS)
+  tagA            Float?    // Trigger/Load Start (seconds)
+  tagB            Float?    // Fire/Launch (seconds)
+  tagC            Float?    // Contact (seconds)
+  tagSource       String?   // "player" | "coach" - who set the tags
+  tagsUpdatedAt   DateTime? // When tags were last modified
+  
+  // Community Sharing & Privacy
+  isPublic        Boolean   @default(false) // Public videos visible in community feed
+  shareableLink   String?   @unique // Unique ID for public sharing (e.g., "abc123xyz")
+  views           Int       @default(0) // Track views on shared videos
+  sharedAt        DateTime? // When video was first made public
+  
+  // OnForm 3D Integration (Future)
+  threeDSource    String?   // "onform" | null - where 3D data came from
+  threeDData      Json?     // 3D metrics from OnForm when available
+  cameraAngle     String?   // "face-on" | "side" | "overhead" - capture angle
+  
+  // Flow Overlay Report (WO18) - Replaces second motion video analyzer
+  flowOverlayMp4Url         String?   // S3 URL to flow overlay video (skeleton + A/B/C markers)
+  flowOverlayGifUrl         String?   // S3 URL to flow overlay GIF for quick preview
+  flowMomentumScore         Float?    // 0-100, overall momentum flow score
+  flowTempoRatio            String?   // e.g. "2.8 : 1.0" (Load:Fire ratio)
+  flowSmoothnessScore       Float?    // 0-100, kinematic sequence smoothness
+  flowTransferEfficiency    Float?    // 0-100, energy transfer efficiency
+  flowReportGenerated       Boolean   @default(false)  // Whether flow report has been generated
+  flowReportGeneratedAt     DateTime? // When flow report was last generated
+  
+  uploadDate      DateTime  @default(now())
+  
+  // Relations
+  assessments     Assessment[]
+  swingAnalyses   SwingAnalysis[]
+  
+  @@index([userId, uploadDate])
+  @@index([isPublic, sharedAt]) // For community feed queries
+  @@index([sessionId, uploadDate]) // For session-grouped queries
+}
+
+model TrainingSession {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation("UserTrainingSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionName     String?   // Optional custom name (e.g., "Morning Practice")
+  location        String?   // Where the session took place
+  lessonFocus     String?   // What the athlete is working on this lesson (for AI context)
+  videoType       String?   // Type of swings in this lesson (swing, drill, etc.)
+  
+  createdAt       DateTime  @default(now())
+  endedAt         DateTime? // null = session is active, non-null = session ended
+  
+  // Relations
+  videos          Video[]   // All swings/videos in this session
+  
+  @@index([userId, createdAt])
+  @@index([userId, endedAt]) // For querying active vs completed sessions
+}
+
+// GOATY Player Lesson System - Core unit for player training
+enum PlayerLessonStatus {
+  ACTIVE      // Lesson is in progress
+  COMPLETED   // Lesson finished and saved
+  ARCHIVED    // Old lesson archived
+}
+
+model PlayerLesson {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation("UserPlayerLessons", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Lesson Configuration
+  goal            String?   // "Timing", "Anchor Stability", "Engine Sequencing", "Whip Direction", etc.
+  notes           String?   @db.Text // What the player is working on today
+  status          PlayerLessonStatus @default(ACTIVE)
+  
+  // Lesson-Level Metrics (Averages across all swings in this lesson)
+  lessonBarrelScore   Float?
+  lessonAnchorScore   Float?
+  lessonEngineScore   Float?
+  lessonWhipScore     Float?
+  
+  // GOATY Recommendations for this lesson
+  coachRecommendation String?   @db.Text // Personalized coaching text
+  drillRecommendations Json?    // Array of drill IDs or drill objects
+  
+  // Metadata
+  swingCount      Int       @default(0) // Number of swings/videos in this lesson
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime? // When lesson was marked complete
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  videos          Video[]   @relation("PlayerLessonVideos") // All swings in this lesson
+  
+  @@index([userId, createdAt])
+  @@index([userId, status])
+  @@index([userId, completedAt])
+}
+
+model Drill {
+  id              String    @id @default(uuid())
+  name            String    @unique
+  source          String
+  category        String    // "Anchor", "Engine", "Whip", "General"
+  primaryPurpose  String
+  setup           String    @db.Text
+  execution       String    @db.Text
+  keyPoints       String[]  @default([])
+  commonMistakes  String[]  @default([])
+  equipment       String[]  @default([])
+  targetSkills    String[]  @default([])
+  difficulty      String    // "Beginner", "Intermediate", "Advanced"
+  videoUrl        String?   // Mock video URL
+  thumbnailUrl    String?
+  
+  progress        DrillProgress[]
+}
+
+model DrillProgress {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  drillId     String
+  drill       Drill     @relation(fields: [drillId], references: [id], onDelete: Cascade)
+  
+  completed   Boolean   @default(false)
+  reps        Int?
+  sets        Int?
+  notes       String?
+  
+  completedAt DateTime  @default(now())
+  
+  @@index([userId, drillId])
+}
+
+model ProgressEntry {
+  id              String    @id @default(uuid())
+  userId          String
+  date            DateTime  @default(now())
+  
+  // Weekly averages - Main Metrics
+  avgAnchor       Int       // Lower Body (0-100)
+  avgEngine       Int       // Trunk/Core (0-100)
+  avgWhip         Int       // Arms & Bat (0-100)
+  avgOverall      Int       // Average of 3 metrics (0-100)
+  
+  // Anchor Subcategories Averages
+  avgAnchorStance              Int?
+  avgAnchorWeightShift         Int?
+  avgAnchorGroundConnection    Int?
+  avgAnchorLowerBodyMechanics  Int?
+  
+  // Engine Subcategories Averages
+  avgEngineHipRotation    Int?
+  avgEngineSeparation     Int?
+  avgEngineCorePower      Int?
+  avgEngineTorsoMechanics Int?
+  
+  // Whip Subcategories Averages
+  avgWhipArmPath      Int?
+  avgWhipBatSpeed     Int?
+  avgWhipBatPath      Int?
+  avgWhipConnection   Int?
+  
+  @@index([userId, date])
+}
+
+model CoachingCall {
+  id          String   @id @default(uuid())
+  title       String   // "Monday Night Coaching - Nov 23"
+  zoomLink    String   // Zoom recording URL
+  description String?  @db.Text
+  callDate    DateTime // Date of the coaching call
+  duration    Int?     // Duration in minutes (optional)
+  topics      String[] @default([]) // ["Hip Rotation", "Weight Shift"]
+  transcript  String?  @db.Text // Full transcript with timestamps
+  createdAt   DateTime @default(now())
+  
+  @@index([callDate])
+}
+
+// Knowledge Base Models - For migrated membership.io content
+model Course {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?   @db.Text
+  thumbnail       String?   // Course image URL
+  
+  // Visibility & Access Control
+  visibility      String    @default("athlete") // "athlete" (public to users), "admin" (admin-only), "hidden"
+  contentType     String    @default("training") // "training", "marketing", "operations", "other"
+  
+  // Source tracking
+  sourceUrl       String?   // Original membership.io URL
+  sourcePlatform  String    @default("membership.io")
+  
+  // Organization
+  category        String?   // "Hitting Mechanics", "Mental Game", "Biomechanics", etc.
+  difficulty      String?   // "Beginner", "Intermediate", "Advanced"
+  order           Int       @default(0) // Display order
+  
+  // Status
+  published       Boolean   @default(true)
+  featured        Boolean   @default(false)
+  
+  // Timestamps
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  importedAt      DateTime? // When scraped from membership.io
+  
+  // Relations
+  modules         Module[]
+  tags            CourseTag[]
+  
+  @@index([visibility, published])
+  @@index([category])
+}
+
+model Module {
+  id              String    @id @default(uuid())
+  courseId        String
+  course          Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?   @db.Text
+  order           Int       @default(0) // Order within course
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  lessons         Lesson[]
+  
+  @@index([courseId, order])
+}
+
+model Lesson {
+  id              String    @id @default(uuid())
+  moduleId        String
+  module          Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?   @db.Text
+  content         String?   @db.Text // Main text content (transcripts, notes, etc.)
+  
+  // Lesson type
+  lessonType      String    @default("text") // "text", "video", "pdf", "mixed"
+  duration        Int?      // Duration in minutes (for videos)
+  
+  // Organization
+  order           Int       @default(0)
+  
+  // Source
+  sourceUrl       String?   // Original URL from membership.io
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  // Relations
+  assets          ContentAsset[]
+  
+  @@index([moduleId, order])
+}
+
+model ContentAsset {
+  id              String    @id @default(uuid())
+  lessonId        String?
+  lesson          Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  title           String
+  description     String?   @db.Text
+  
+  // Asset details
+  assetType       String    // "video", "pdf", "image", "document", "link"
+  fileUrl         String?   // S3 URL or external URL
+  cloudStoragePath String? // S3 key if stored in our bucket
+  fileSize        Int?      // File size in bytes
+  mimeType        String?
+  
+  // For videos
+  duration        Int?      // Duration in seconds
+  thumbnail       String?
+  
+  // For text extraction (PDFs, documents)
+  extractedText   String?   @db.Text // Full text for search/AI
+  
+  // Source
+  originalUrl     String?   // Original membership.io URL
+  
+  createdAt       DateTime  @default(now())
+  
+  @@index([lessonId])
+  @@index([assetType])
+}
+
+model CourseTag {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  tag       String   // "hitting", "biomechanics", "drills", "mental-game", etc.
+  
+  @@unique([courseId, tag])
+  @@index([tag])
+}
+
+// Assessment Results (Comprehensive S2 + Biomechanical + Contact Quality)
+model Assessment {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videoId           String?   // Optional video association
+  video             Video?    @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  
+  // Assessment Metadata
+  assessmentType    String    // "neuro", "biomechanical", "combined", "timing_test"
+  assessmentName    String?   // Custom name for the assessment
+  status            String    @default("pending") // "pending", "in_progress", "completed", "cancelled"
+  
+  // Whop Purchase Tracking (Optional - for paid assessments)
+  whopPaymentId     String?   @unique
+  purchaseDate      DateTime?
+  amountPaid        Int?      // Amount in cents
+  
+  // Scheduling
+  scheduledDate     DateTime?
+  location          String?   // In-person location
+  testDate          DateTime? // Actual test completion date
+  
+  // === STANDARD NEURO (S2 Cognitive Assessment) ===
+  // Timing Control Metrics (0-100)
+  timingControlScore     Float?
+  avgTimingAccuracy      Float?   // Milliseconds off target
+  velocityAdaptation     Float?   // 0-100 ability to adjust to speed changes
+  fooledByVelocity       Float?   // % fooled by velocity changes
+  
+  // Trajectory Prediction Metrics (0-100)
+  trajectoryScore        Float?
+  zoneRecognitionAccuracy Float? // % correct zone predictions
+  pitchTypeRecognition   Float?   // % breaking ball vs fastball correct
+  callAccuracy           Float?   // % correct ball/strike predictions
+  
+  // Take Decisions (Impulse Control) Metrics (0-100)
+  impulseControlScore    Float?
+  chaseRate              Float?   // % swings at balls out of zone
+  strikeZoneJudgment     Float?   // Accuracy of ball/strike judgment
+  swingDecisionQuality   Float?   // Overall swing/take decision quality
+  
+  // Overall Neuro Composite (0-100)
+  neuroCompositeScore    Float?
+  
+  // === 52-PITCH TIMING TEST DATA ===
+  pitchTestCompleted     Boolean  @default(false)
+  totalPitches           Int      @default(0)
+  
+  // Contact Metrics
+  contactCount           Int      @default(0)
+  contactRate            Float?   // %
+  hardContactCount       Int      @default(0)
+  hardContactRate        Float?   // %
+  missCount              Int      @default(0)
+  foulCount              Int      @default(0)
+  
+  // Velocity Mix Performance (out of totals)
+  fastballPitches        Int      @default(0)
+  fastballContact        Int      @default(0)
+  fastballContactRate    Float?   // %
+  
+  offspeedPitches        Int      @default(0)
+  offspeedContact        Int      @default(0)
+  offspeedContactRate    Float?   // %
+  
+  breakingBallPitches    Int      @default(0)
+  breakingBallContact    Int      @default(0)
+  breakingBallContactRate Float?  // %
+  
+  // Timing Errors
+  earlySwings            Int      @default(0)
+  earlySwingRate         Float?   // %
+  lateSwings             Int      @default(0)
+  lateSwingRate          Float?   // %
+  onTimeSwings           Int      @default(0)
+  onTimeSwingRate        Float?   // %
+  
+  // Zone Discipline
+  swingsInZone           Int      @default(0)
+  swingsOutOfZone        Int      @default(0)
+  swingRate              Float?   // % of total pitches swung at
+  
+  takesInZone            Int      @default(0)
+  takesOutOfZone         Int      @default(0)
+  takeRate               Float?   // % of total pitches taken
+  
+  zoneControl            Float?   // % swings in zone / total swings
+  
+  // === ANCHOR ENGINE WHIP (4Bs Biomechanical) ===
+  // Reference video scores or standalone biomech assessment
+  anchorScore            Float?   // Lower body/stance (0-100)
+  engineScore            Float?   // Rotation/power/core (0-100)
+  whipScore              Float?   // Bat speed/path/connection (0-100)
+  biomechanicalComposite Float?   // Average of 3 metrics (0-100)
+  
+  // Detailed Anchor Metrics
+  anchorStance              Float?
+  anchorWeightShift         Float?
+  anchorGroundConnection    Float?
+  anchorLowerBodyMechanics  Float?
+  
+  // Detailed Engine Metrics
+  engineHipRotation    Float?
+  engineSeparation     Float?
+  engineCorePower      Float?
+  engineTorsoMechanics Float?
+  
+  // Detailed Whip Metrics
+  whipArmPath      Float?
+  whipBatSpeed     Float?
+  whipBatPath      Float?
+  whipConnection   Float?
+  
+  // === BAT AND BALL (Contact Quality) ===
+  exitVelocityAvg        Float?   // mph
+  exitVelocityMax        Float?   // mph
+  launchAngleAvg         Float?   // degrees
+  launchAngleMax         Float?   // degrees
+  barrelRate             Float?   // %
+  sweetSpotRate          Float?   // %
+  hardHitRate            Float?   // % exit velo > 95mph
+  lineDriverate          Float?   // % launch angle 10-25 degrees
+  
+  // === HIT TRAX LAUNCH MONITOR DATA (Ball Score) ===
+  ballFlightDistance     Float?   // Average distance in feet
+  ballFlightDistanceMax  Float?   // Max distance in feet
+  sprayAngle             Float?   // Average spray angle in degrees (-45 to +45)
+  ballScoreComposite     Float?   // Overall ball contact score (0-100)
+  hitTraxDataImported    Boolean  @default(false) // Was Hit Trax CSV imported?
+  hitTraxImportDate      DateTime? // When CSV was imported
+  
+  // === ASSESSMENT INSIGHTS ===
+  overallGrade           String?  // "Elite", "Advanced", "Intermediate", "Developing"
+  cognitiveGrade         String?  // S2 neuro grade
+  biomechanicalGrade     String?  // 4Bs grade
+  contactQualityGrade    String?  // Bat-ball grade
+  
+  // Strengths & Weaknesses (JSON arrays)
+  strengths              Json?    // ["Excellent timing control", "Strong impulse control"]
+  weaknesses             Json?    // ["Trajectory prediction needs work"]
+  recommendations        Json?    // ["Focus on breaking ball recognition drills"]
+  
+  // Coach Notes
+  coachNotes             String?  @db.Text
+  testNotes              String?  @db.Text
+  
+  // === REPORT METADATA ===
+  reportGenerated        Boolean  @default(false)
+  reportUrl              String?  // S3 URL for generated PDF report
+  reportData             Json?    // Structured report data
+  
+  // Timestamps
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  completedAt            DateTime?
+  
+  @@index([userId, status])
+  @@index([assessmentType])
+  @@index([videoId])
+}
+
+// Whop Product Mapping (Maps Whop product IDs to app tiers/features)
+model WhopProduct {
+  id                String    @id @default(uuid())
+  
+  // Whop Product Details
+  whopProductId     String    @unique // Whop product ID from dashboard
+  whopPlanId        String?   // Whop plan ID (for subscriptions)
+  productName       String    // "BARRELS Athlete", "BARRELS Pro", etc.
+  
+  // Product Type
+  productType       String    // "subscription", "one_time", "assessment"
+  
+  // Membership Tier (for subscriptions)
+  membershipTier    String?   // "athlete", "pro", "elite" (null for assessments/other)
+  
+  // Assessment Type (for assessment products)
+  assessmentType    String?   // "neuro_swing", "s2_cognition" (null for subscriptions)
+  
+  // Pricing
+  price             Int       // Price in cents
+  billingInterval   String?   // "monthly", "yearly" (null for one-time)
+  
+  // Status
+  isActive          Boolean   @default(true)
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([productType, isActive])
+}
+
+// Model Videos for Overlay Comparison (Pro swing references)
+model ModelVideo {
+  id               String   @id @default(cuid())
+  title            String
+  description      String?  @db.Text
+  handedness       String   // "right" or "left"
+  cloudStoragePath String   // S3 path
+  thumbnailUrl     String?
+  
+  // Player info
+  playerName       String?  // e.g., "Mike Trout", "Juan Soto"
+  playerLevel      String?  // "mlb", "college", "pro"
+  playerHeight     Int?     // Height in inches for auto-calibration
+  
+  // Video Processing
+  impactFrame      Int?     // Frame number where ball impact occurs (trimmed videos)
+  trimmedPath      String?  // S3 path to trimmed version (2s before/after impact)
+  fps              Int?     // Original video FPS (120-300 FPS typically)
+  normalizedFps    Float    @default(60) // Normalized FPS for comparison (60 baseline)
+  
+  // Skeleton data for overlay (JSON format)
+  skeletonData     Json?    // Frame-by-frame joint positions
+  skeletonExtracted Boolean @default(false)
+  skeletonStatus   String   @default("COMPLETE") // ModelVideo pre-processed, always COMPLETE
+  skeletonErrorMessage String?
+  
+  // Metadata
+  duration         Int?     // Video duration in seconds
+  
+  active           Boolean  @default(true)
+  uploadDate       DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  @@index([handedness])
+  @@index([active])
+}
+
+// ============================================
+// MULTI-SWING ASSESSMENT SYSTEM
+// ============================================
+
+// Assessment Session - Container for multiple swings analyzed together
+model AssessmentSession {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation("UserAssessmentSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Session Metadata
+  sessionName   String   @default("Assessment Session")
+  sessionDate   DateTime @default(now())
+  location      String?  // "BARRELS HQ", "OnForm Import", etc.
+  assessorName  String?  // Coach name
+  
+  // Session Status
+  status        String   @default("pending") // "pending", "processing", "completed", "error"
+  processedAt   DateTime?
+  
+  // Data Links
+  swings        SwingAnalysis[]  @relation("SessionSwings")
+  ballData      BallDataPoint[]  @relation("SessionBallData")
+  report        AssessmentReport?
+  onTheBallHistory PlayerOnTheBallHistory? @relation("AssessmentOnTheBall")
+  
+  // Analysis Progress
+  totalSwings       Int      @default(0)
+  processedSwings   Int      @default(0)
+  successfulSwings  Int      @default(0)
+  failedSwings      Int      @default(0)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([userId, status])
+  @@index([sessionDate])
+}
+
+// Swing Analysis - Individual swing record within an assessment
+model SwingAnalysis {
+  id            String   @id @default(uuid())
+  sessionId     String
+  session       AssessmentSession @relation("SessionSwings", fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Video Link
+  videoId       String?
+  video         Video?   @relation(fields: [videoId], references: [id], onDelete: SetNull)
+  
+  // Swing Metadata
+  swingNumber   Int      // 1, 2, 3, etc. (order in session)
+  swingType     String?  // "tee", "soft_toss", "live_bp", "game"
+  
+  // Processing Status
+  analyzed      Boolean  @default(false)
+  analysisStatus String  @default("pending") // "pending", "processing", "completed", "failed"
+  errorMessage  String?  @db.Text
+  
+  // Swing Metrics (from video analysis)
+  metrics       SwingMetrics?
+  
+  // Joint Data (from skeleton extraction)
+  joints        SwingJointSeries?
+  
+  // Ball Data Link (if available)
+  ballDataId    String?  @unique
+  ballData      BallDataPoint? @relation(fields: [ballDataId], references: [id])
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([sessionId, swingNumber])
+}
+
+// Swing Metrics - Detailed per-swing analysis results
+model SwingMetrics {
+  id            String   @id @default(uuid())
+  swingId       String   @unique
+  swing         SwingAnalysis @relation(fields: [swingId], references: [id], onDelete: Cascade)
+  
+  // ===== MOTION METRICS (how things move over time) =====
+  // Global Motion
+  avgBatSpeedMph      Float?   // Bat speed at impact (mph)
+  maxBatSpeedMph      Float?   // Peak bat speed
+  avgHandSpeedMph     Float?   // Hand speed at impact
+  maxHandSpeedMph     Float?   // Peak hand speed
+  
+  // Temporal Motion
+  loadToLaunchMs      Float?   // Milliseconds from load to launch
+  launchToImpactMs    Float?   // Milliseconds from launch to impact
+  swingDurationMs     Float?   // Total swing duration (launch → impact)
+  
+  // Segment Angular Velocities (Dr. Kwon)
+  pelvisMaxAngularVelocity   Float?   // deg/s
+  torsoMaxAngularVelocity    Float?   // deg/s
+  armMaxAngularVelocity      Float?   // deg/s
+  batMaxAngularVelocity      Float?   // deg/s
+  
+  // ===== STABILITY METRICS (positions at key events + control) =====
+  // At Launch
+  spineTiltAtLaunchDeg     Float?   // Spine tilt angle at launch
+  pelvisAngleAtLaunchDeg   Float?   // Pelvis rotation at launch
+  shoulderTiltAtLaunchDeg  Float?   // Shoulder tilt at launch
+  backKneeFlexionAtLaunchDeg Float? // Back knee angle at launch
+  
+  // At Impact
+  spineTiltAtImpactDeg     Float?   // Spine tilt angle at impact
+  pelvisAngleAtImpactDeg   Float?   // Pelvis rotation at impact
+  shoulderTiltAtImpactDeg  Float?   // Shoulder tilt at impact
+  frontKneeFlexionAtImpactDeg Float? // Front knee angle at impact
+  hipShoulderSeparation    Float?   // X-Factor (degrees)
+  leadElbowAngle           Float?   // Lead elbow at impact
+  rearElbowAngle           Float?   // Rear elbow at impact
+  
+  // Base/Ground
+  headDisplacementFromStanceCm Float? // Head movement from setup
+  strideLengthFactor           Float? // Stride length as % of height (0-1)
+  
+  // ===== SEQUENCING METRICS (when and in what order segments move) =====
+  // Peak Timings (ms before impact)
+  pelvisPeakTimingMs  Float?   // When pelvis peaks
+  torsoPeakTimingMs   Float?   // When torso peaks
+  armPeakTimingMs     Float?   // When arm peaks
+  batPeakTimingMs     Float?   // When bat peaks (should be approximately 0)
+  
+  // Timing Gaps
+  pelvisToTorsoGapMs  Float?   // Gap between pelvis and torso peaks
+  torsoToArmGapMs     Float?   // Gap between torso and arm peaks
+  armToBatGapMs       Float?   // Gap between arm and bat peaks
+  
+  // Sequence Evaluation
+  sequenceOrder       String[] @default([]) // ["pelvis", "torso", "arm", "bat"] or actual order
+  sequenceOrderScore  Float?   // 0-100 (correct order?)
+  sequenceTimingScore Float?   // 0-100 (gaps near 30-50ms?)
+  sequenceScore       Float?   // 0-100 (combined)
+  
+  // ===== QUALITY METRICS =====
+  confidence          Float?  // 0-1 (how confident is the analysis)
+  overallScore        Float?  // 0-100 composite score
+  
+  createdAt     DateTime @default(now())
+}
+
+// Swing Joint Series - Frame-by-frame joint data for visualization
+model SwingJointSeries {
+  id            String   @id @default(uuid())
+  swingId       String   @unique
+  swing         SwingAnalysis @relation(fields: [swingId], references: [id], onDelete: Cascade)
+  
+  // Joint Data (JSON array of frames)
+  // Format: [{t: 0.0, joints: [{name: "left_shoulder", x: 0.5, y: 0.3, confidence: 0.95}, ...]}, ...]
+  frames        Json     // Array of FrameJoints
+  
+  // Metadata
+  cameraAngle   String?  // "side", "face-on", "dtl", "overhead"
+  fps           Float?   // Original video FPS
+  normalizedFps Float?   // Normalized FPS (60 baseline)
+  impactFrame   Int?     // Frame number of ball impact
+  
+  // Quality Metrics
+  qualityScore  Float?   // 0-1 (average joint confidence)
+  framesExtracted Int?   // Total frames processed
+  
+  // Player Context
+  playerHeight  Float?   // For height normalization
+  handedness    String?  // "right" | "left"
+  
+  extractedAt   DateTime @default(now())
+}
+
+// Ball Data Point - HitTrax/Rapsodo/TrackMan integration
+model BallDataPoint {
+  id            String   @id @default(uuid())
+  sessionId     String
+  session       AssessmentSession @relation("SessionBallData", fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Swing Link (optional - not all balls have video)
+  swing         SwingAnalysis?
+  
+  // Ball Metrics (from HitTrax, Rapsodo, etc.)
+  exitVelocity  Float?   // MPH
+  launchAngle   Float?   // Degrees
+  distance      Float?   // Feet
+  direction     Float?   // Degrees (0=center, neg=pull, pos=oppo)
+  hangTime      Float?   // Seconds
+  spinRate      Int?     // RPM
+  spinAxis      Float?   // Degrees
+  
+  // Hit Quality
+  result        String?  // "barrel", "solid", "weak", "foul", "miss"
+  hitType       String?  // "ground_ball", "line_drive", "fly_ball", "pop_up"
+  
+  // Pitch Info (if available)
+  pitchSpeed    Float?   // MPH
+  pitchType     String?  // "fastball", "curveball", etc.
+  
+  // Data Source
+  source        String   @default("manual") // "hittrax", "rapsodo", "trackman", "manual"
+  
+  createdAt     DateTime @default(now())
+  
+  @@index([sessionId])
+}
+
+// Assessment Metrics Summary - Aggregated statistics from all swings
+model AssessmentMetricsSummary {
+  id            String   @id @default(uuid())
+  reportId      String   @unique
+  report        AssessmentReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  
+  // ===== MOTION SUMMARY (averages & quality) =====
+  // Global Motion
+  avgBatSpeed         Float?   // mph
+  maxBatSpeed         Float?   // mph
+  avgHandSpeed        Float?   // mph
+  maxHandSpeed        Float?   // mph
+  
+  // Temporal Motion
+  avgLoadToLaunch     Float?   // ms
+  avgLaunchToImpact   Float?   // ms
+  avgSwingDuration    Float?   // ms
+  
+  // Segment Angular Velocities
+  avgPelvisVelocity   Float?   // deg/s
+  avgTorsoVelocity    Float?   // deg/s
+  avgArmVelocity      Float?   // deg/s
+  avgBatVelocity      Float?   // deg/s
+  
+  // Motion Quality
+  motionConsistencyScore Float? // 0-100 (std dev of velocities)
+  
+  // ===== STABILITY SUMMARY (consistency of positions) =====
+  // At Launch
+  avgSpineTiltAtLaunch     Float?   // degrees
+  avgPelvisAngleAtLaunch   Float?   // degrees
+  avgShoulderTiltAtLaunch  Float?   // degrees
+  
+  // At Impact
+  avgSpineTiltAtImpact     Float?   // degrees
+  avgPelvisAngleAtImpact   Float?   // degrees
+  avgShoulderTiltAtImpact  Float?   // degrees
+  avgFrontKneeAngle        Float?   // degrees
+  avgXFactor               Float?   // degrees (hip-shoulder separation)
+  
+  // Base/Ground
+  avgHeadDisplacement      Float?   // cm
+  avgStrideLengthFactor    Float?   // 0-1
+  
+  // Stability Consistency Scores
+  spineTiltConsistencyScore   Float? // 0-100
+  pelvisAngleConsistencyScore Float? // 0-100
+  headStabilityScore          Float? // 0-100
+  overallStabilityScore       Float? // 0-100 (composite)
+  
+  // ===== SEQUENCING SUMMARY (timing & order) =====
+  // Average Peak Timings
+  avgPelvisPeakTiming  Float?   // ms before impact
+  avgTorsoPeakTiming   Float?   // ms before impact
+  avgArmPeakTiming     Float?   // ms before impact
+  avgBatPeakTiming     Float?   // ms before impact
+  
+  // Average Timing Gaps
+  avgPelvisToTorsoGap  Float?   // ms
+  avgTorsoToArmGap     Float?   // ms
+  avgArmToBatGap       Float?   // ms
+  
+  // Sequencing Quality
+  avgSequenceScore        Float?  // 0-100
+  avgSequenceOrderScore   Float?  // 0-100
+  avgSequenceTimingScore  Float?  // 0-100
+  sequenceConsistency     Float?  // 0-100 (pattern repeatability)
+  
+  // ===== ANCHOR/ENGINE/WHIP SCORES (3 SEPARATE) =====
+  // Anchor (Lower body foundation)
+  anchorScore             Float?  // 0-100 (weighted from Motion/Stability/Sequencing of pelvis/legs)
+  anchorMotion            Float?  // 0-100 (pelvis velocity, load→launch timing, stride)
+  anchorStability         Float?  // 0-100 (knee angles, head stability, stride consistency)
+  anchorSequencing        Float?  // 0-100 (pelvis timing as first mover)
+  
+  // Engine (Core rotational power)
+  engineScore             Float?  // 0-100 (weighted from Motion/Stability/Sequencing of torso/core)
+  engineMotion            Float?  // 0-100 (torso velocity, pelvis-torso coordination)
+  engineStability         Float?  // 0-100 (spine tilt, pelvis angle, X-factor)
+  engineSequencing        Float?  // 0-100 (pelvis-torso gap timing)
+  
+  // Whip (Arms + bat)
+  whipScore               Float?  // 0-100 (weighted from Motion/Stability/Sequencing of arm/bat)
+  whipMotion              Float?  // 0-100 (bat & hand speed, arm/bat velocities)
+  whipStability           Float?  // 0-100 (shoulder tilt, elbow angles, bracing)
+  whipSequencing          Float?  // 0-100 (torso-arm, arm-bat timing & gaps)
+  
+  // ===== BALL DATA (Averages) =====
+  avgExitVelocity     Float?
+  maxExitVelocity     Float?
+  avgLaunchAngle      Float?
+  avgDistance         Float?
+  barrelRate          Float?  // % of barrels
+  solidContactRate    Float?  // % of solid contact
+  
+  // ===== OVERALL QUALITY SCORES =====
+  overallSwingScore   Float?  // 0-100 (composite of all factors)
+  biomechanicsScore   Float?  // 0-100
+  ballContactScore    Float?  // 0-100
+  
+  createdAt     DateTime @default(now())
+}
+
+// Assessment Report - Final structured report document
+model AssessmentReport {
+  id            String   @id @default(uuid())
+  sessionId     String   @unique
+  session       AssessmentSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  // Report Content
+  summary       String   @db.Text // Executive summary
+  
+  // Overall Score
+  overallScore  Float?   // 0-100 composite
+  scoreExplanation String? @db.Text
+  
+  // Metrics Summary
+  metrics       AssessmentMetricsSummary?
+  
+  // Ball Data Summary (JSON)
+  ballDataSummary Json?  // {avgExitVelo, maxExitVelo, barrelRate, etc.}
+  
+  // Gamma Report Sections (AI-generated summaries)
+  executiveSummary  String?  @db.Text // High-level overview for Gamma deck
+  motionSummary     String?  @db.Text // Motion metrics narrative
+  stabilitySummary  String?  @db.Text // Stability metrics narrative
+  sequencingSummary String?  @db.Text // Sequencing metrics narrative
+  neuroNotes        String?  @db.Text // Cognitive/S2 analysis
+  bodyPlan          String?  @db.Text // Specific body movement plan
+  
+  // Body Recommendations (Coach Input)
+  movementNotes  String?  @db.Text // Freeform text field
+  lowerBodyNotes String?  @db.Text
+  upperBodyNotes String?  @db.Text
+  batPathNotes   String?  @db.Text
+  
+  // Training Plan
+  plan          String?  @db.Text // Personalized training plan
+  topPriorities Json?    // ["Fix stride length", "Improve sequence timing", etc.]
+  
+  // Strengths & Weaknesses
+  strengths     Json?    // [{area: "Bat Speed", description: "..."}]
+  weaknesses    Json?    // [{area: "Sequence Timing", description: "..."}]
+  
+  // Drill Recommendations
+  drills        Json?    // [{drillId: "...", reason: "..."}]
+  
+  // Comparison with Previous Assessment
+  previousAssessmentId String?  // Reference to previous assessment session
+  comparisonData       Json?    // Deltas and progress metrics
+  
+  // Report Generation
+  generatedAt   DateTime?
+  pdfUrl        String?  // S3 link to PDF
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============================================================================
+// Timing & Processing Module (52-Pitch Timing Test)
+// ============================================================================
+
+model TimingSession {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation("UserTimingSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionDate     DateTime
+  testType        String   @default("52_pitch_timing")
+  machineDistanceFt Decimal @db.Decimal(5,2)
+  videoFps        Int
+  notes           String?  @db.Text
+  
+  pitches         TimingPitch[]
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("timing_sessions")
+}
+
+model TimingPitch {
+  id              String   @id @default(uuid())
+  sessionId       String
+  session         TimingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  pitchNumber     Int      // 1-52
+  speedLabel      String   // "90" | "80" | "70" (game-equivalent label)
+  machineSpeedMph Decimal  @db.Decimal(5,2) // actual wheel setting (e.g., 62 for "90 equivalent")
+  timeToPlatMs    Decimal? @db.Decimal(6,2) // computed from distance / speed
+  
+  // Video frame markers
+  frameRelease    Int?     // Frame when ball leaves machine
+  frameLaunch     Int?     // Frame when hips commit (player launches)
+  frameContact    Int?     // Frame of bat-ball contact (or null if miss)
+  
+  // Computed timing metrics
+  decisionTimeMs  Decimal? @db.Decimal(6,2) // (frameLaunch - frameRelease) / fps * 1000
+  bufferMs        Decimal? @db.Decimal(6,2) // timeToPlatMs - decisionTimeMs
+  swingTimeMs     Decimal? @db.Decimal(6,2) // (frameContact - frameLaunch) / fps * 1000
+  
+  // Outcome tracking
+  outcome         String?  // "barrel" | "late" | "early" | "miss" | "foul"
+  exitVelo        Decimal? @db.Decimal(5,2)
+  contactType     String?  // "HC" (Hard Contact) | "WC" (Weak Contact) | "M" (Miss) | "FB" (Foul Ball)
+  resultType      String?  // "LD" (Line Drive) | "FB" (Fly Ball) | "GB" (Ground Ball) | "P" (Pop-up) | "M" (Miss)
+  resultLocation  String?  // "1-9" | "L" (Left) | "R" (Right) | "B" (Back) | "M" (Miss)
+  
+  // HitTrax Integration
+  launchAngle     Decimal? @db.Decimal(5,2)
+  distance        Decimal? @db.Decimal(6,2)
+  
+  // Speed change analysis
+  previousPitchSpeedLabel String? // For transition analysis
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("timing_pitches")
+  @@index([sessionId])
+  @@index([sessionId, pitchNumber])
+}
+
+// ============================================================================
+// S2 Cognition Integration
+// ============================================================================
+
+model S2CognitionReport {
+  id                          String   @id @default(uuid())
+  userId                      String
+  user                        User     @relation("UserS2Reports", fields: [userId], references: [id], onDelete: Cascade)
+  
+  uploadDate                  DateTime @default(now())
+  testDate                    DateTime
+  filePath                    String   @db.Text // stored file location
+  
+  // S2 Cognitive Scores (0-100 or percentile)
+  perceptionSpeedScore        Int?
+  timingControlScore          Int?
+  stoppingControlScore        Int?
+  trajectoryPredictionScore   Int?
+  rhythmControlScore          Int?
+  impulseControlScore         Int?
+  distractionControlScore     Int?
+  instinctiveLearningScore    Int?
+  overallScore                Int?
+  
+  notes                       String?  @db.Text
+  
+  createdAt                   DateTime @default(now())
+  updatedAt                   DateTime @updatedAt
+  
+  @@map("s2_cognition_reports")
+  @@index([userId])
+  @@index([userId, testDate])
+}
+
+// ============================================================================
+// ON-THE-BALL SYSTEM (Contact Quality & Consistency)
+// Implements Statcast-style barrel metrics with level adjustments
+// Works with both HitTrax uploads and BARRELS assessment events
+// ============================================================================
+
+model HitTraxSession {
+  id                  String                      @id @default(uuid())
+  userId              String
+  user                User                        @relation("UserHitTraxSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  sessionDate         DateTime                    @default(now())
+  sourceFileName      String?                     @db.Text
+  level               String?                     // "youth" | "hs" | "college" | "pro"
+  notes               String?                     @db.Text
+  
+  // Import tracking (WO-IMPORT-01)
+  importSessionId     String?
+  importSession       ImportSession?              @relation("ImportHitTraxSessions", fields: [importSessionId], references: [id])
+  
+  createdAt           DateTime                    @default(now())
+  updatedAt           DateTime                    @updatedAt
+  
+  events              HitTraxEvent[]
+  onTheBallHistory    PlayerOnTheBallHistory?
+  
+  @@map("hittrax_sessions")
+  @@index([userId])
+  @@index([sessionDate])
+  @@index([importSessionId])
+}
+
+model HitTraxEvent {
+  id                  String           @id @default(uuid())
+  sessionId           String
+  session             HitTraxSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  rowNumber           Int
+  ab                  Int?
+  date                DateTime?
+  timeStamp           String?          @db.Text
+  
+  // Pitch data
+  pitch               Decimal?         @db.Decimal(5,2) // pitch speed
+  strikeZone          Int?             // zone code (4-12, etc.)
+  pType               String?          @db.Text         // pitch type
+  
+  // Ball data
+  velo                Decimal?         @db.Decimal(5,2) // exit velocity
+  la                  Decimal?         @db.Decimal(5,2) // launch angle
+  dist                Decimal?         @db.Decimal(6,2) // distance
+  res                 String?          @db.Text         // result code (HR, 1B-8, Foul, etc.)
+  type                String?          @db.Text         // batted ball type (LD, GB, FB)
+  
+  // Spray data
+  horizAngle          Decimal?         @db.Decimal(6,2)
+  sprayChartX         Decimal?         @db.Decimal(6,2)
+  sprayChartZ         Decimal?         @db.Decimal(6,2)
+  
+  // Derived flags (calculated on insert)
+  isFair              Boolean          @default(false)
+  isFoul              Boolean          @default(false)
+  isMiss              Boolean          @default(false)
+  inZone              Boolean          @default(false)
+  isBarrel            Boolean          @default(false)
+  
+  // Player context
+  batting             String?          @db.Text // L or R
+  playerLevel         String?          @db.Text // youth, hs, college, pro
+  
+  // Sensor data link (WO-IMPORT-01)
+  sensorSwing         SensorSwing?     // One-to-one via sensorSwing.hittraxEventId
+  
+  createdAt           DateTime         @default(now())
+  
+  @@map("hittrax_events")
+  @@index([sessionId])
+  @@index([isBarrel])
+  @@index([isFair])
+}
+
+model PlayerOnTheBallHistory {
+  id                    String              @id @default(uuid())
+  userId                String
+  user                  User                @relation("UserOnTheBallHistory", fields: [userId], references: [id], onDelete: Cascade)
+  
+  sourceType            String              @db.Text // "assessment" | "hittrax"
+  sourceId              String              @db.Text // assessment_id or hittrax_session_id
+  
+  // Link to source records (one of these will be set)
+  assessmentSession     AssessmentSession?  @relation("AssessmentOnTheBall", fields: [assessmentSessionId], references: [id], onDelete: Cascade)
+  assessmentSessionId   String?             @unique
+  hittraxSession        HitTraxSession?     @relation(fields: [hittraxSessionId], references: [id], onDelete: Cascade)
+  hittraxSessionId      String?             @unique
+  
+  sessionDate           DateTime
+  
+  // Core metrics (session-level)
+  barrelRate            Decimal?            @db.Decimal(5,4) // 0.0 to 1.0
+  avgEv                 Decimal?            @db.Decimal(5,2) // mph
+  avgLa                 Decimal?            @db.Decimal(5,2) // degrees
+  sdLa                  Decimal?            @db.Decimal(5,2) // degrees (consistency)
+  sdEv                  Decimal?            @db.Decimal(5,2) // mph (consistency)
+  
+  // Optional in-zone metrics
+  inzoneBarrelRate      Decimal?            @db.Decimal(5,4)
+  inzoneSdLa            Decimal?            @db.Decimal(5,2)
+  inzoneSdEv            Decimal?            @db.Decimal(5,2)
+  
+  // Breakdown metrics
+  foulPct               Decimal?            @db.Decimal(5,4) // 0.0 to 1.0
+  missPct               Decimal?            @db.Decimal(5,4) // 0.0 to 1.0
+  fairPct               Decimal?            @db.Decimal(5,4) // 0.0 to 1.0
+  
+  // Context
+  level                 String?             @db.Text // youth, hs, college, pro
+  contextJson           Json?                        // additional filters, notes, etc.
+  
+  createdAt             DateTime            @default(now())
+  
+  @@map("player_on_the_ball_history")
+  @@index([userId])
+  @@index([sessionDate])
+  @@index([sourceType])
+}
+
+// Model Swing - Reference swings from pro players for comparison
+model ModelSwing {
+  id            String   @id @default(cuid())
+  name          String
+  description   String?
+  videoUrl      String?
+  jointData     Json
+  hitterName    String?
+  handedness    String?  // "right" | "left"
+  createdAt     DateTime @default(now())
+  
+  @@map("model_swings")
+}
+
+// Brain Test - Cognitive assessment system
+enum BrainTestType {
+  GO_NO_GO
+}
+
+model BrainTestSession {
+  id           String           @id @default(cuid())
+  userId       String
+  user         User             @relation("UserBrainTestSessions", fields: [userId], references: [id], onDelete: Cascade)
+  athleteId    String?
+  type         BrainTestType
+  startedAt    DateTime         @default(now())
+  completedAt  DateTime?
+  trials       BrainTestTrial[]
+  summaryJson  Json?
+  
+  @@map("brain_test_sessions")
+  @@index([userId])
+  @@index([completedAt])
+}
+
+model BrainTestTrial {
+  id          String           @id @default(cuid())
+  session     BrainTestSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  sessionId   String
+  index       Int
+  stimulus    Json             // e.g. { pitchZone, isSwingPitch }
+  response    Json             // e.g. { keyPressed, reacted }
+  isCorrect   Boolean
+  reactionMs  Int?
+  createdAt   DateTime         @default(now())
+  
+  @@map("brain_test_trials")
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// Support Ticket System - In-app bug reporting with screenshots
+model SupportTicket {
+  id              String   @id @default(cuid())
+  userId          String?
+  user            User?    @relation("UserSupportTickets", fields: [userId], references: [id], onDelete: SetNull)
+  userEmail       String?
+  role            String?  // "admin", "coach", "player"
+  
+  // Ticket details
+  whereHappened   String   // "Dashboard", "New Lesson", "History", etc.
+  description     String   @db.Text
+  screenshotUrl   String?  // S3 key for screenshot
+  
+  // Context for debugging
+  userAgent       String?
+  pageUrl         String?
+  extraContext    Json?    // Additional debug info (device, browser, etc.)
+  
+  // Status tracking
+  status          String   @default("open") // "open", "in_progress", "resolved"
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("support_tickets")
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Reboot Motion Data Ingestion (Admin-Only, Phase 1)
+// Stores swing data from Reboot Motion for benchmarking, comparison, and analysis
+model RebootSession {
+  id              String   @id @default(cuid())
+  rebootSessionId String   @unique  // Unique ID from Reboot API
+  rebootAthleteId String?  // Reboot's athlete identifier
+  athleteName     String?  // Name from Reboot
+  athleteEmail    String?  // Email from Reboot (if available)
+  level           String?  // "MLB", "Pro", "College", "HS", "Youth"
+  sessionType     String   @default("HITTING")  // "HITTING", "PITCHING", "OTHER"
+  teamTag         String?  // Team or organization
+  swingDate       DateTime? // When the swing was captured
+  metrics         Json      // Full payload from Reboot API (kinematic/timing data)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("reboot_sessions")
+  @@index([rebootAthleteId])
+  @@index([level])
+  @@index([sessionType])
+  @@index([swingDate])
+  @@index([createdAt])
+}
+
+// POD Scheduling System (WO13)
+// Defines available time slots for in-person POD sessions
+model PodSlot {
+  id          String   @id @default(cuid())
+  date        DateTime // Date of the POD session (only Saturdays and Sundays)
+  dayOfWeek   String   // "Saturday" or "Sunday"
+  startTime   String   // "12:00", "12:30", "13:00", "13:30", "14:00"
+  endTime     String   // "12:30", "13:00", "13:30", "14:00", "14:30"
+  maxAthletes Int      @default(3) // Maximum 3 athletes per pod
+  
+  bookings    PodBooking[] @relation("PodSlotBookings")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([date, startTime]) // One slot per date+time combination
+  @@map("pod_slots")
+  @@index([date])
+  @@index([dayOfWeek])
+}
+
+// POD Bookings (WO13)
+// Tracks which athletes are booked for which POD slots
+model PodBooking {
+  id          String   @id @default(cuid())
+  
+  userId      String
+  user        User     @relation("UserPodBookings", fields: [userId], references: [id], onDelete: Cascade)
+  
+  podSlotId   String
+  podSlot     PodSlot  @relation("PodSlotBookings", fields: [podSlotId], references: [id], onDelete: Cascade)
+  
+  status      String   @default("confirmed") // "confirmed", "attended", "no_show", "cancelled"
+  
+  // Attendance tracking
+  attendedAt  DateTime? // When athlete marked as attended by coach
+  markedBy    String?   // Coach/admin who marked attendance
+  
+  // Credit deduction tracking
+  creditDeducted Boolean @default(true) // Was POD credit deducted for this booking?
+  
+  notes       String?   @db.Text // Coach notes about the session
+  
+  // Diamond Kinetics Swing Metrics (WO15)
+  swingsCaptured      Int?     // Number of swings captured by DK sensor
+  avgBarrelSpeed      Float?   // Average bat speed (mph)
+  avgImpactMomentum   Float?   // Average impact momentum (DK units)
+  avgAttackAngle      Float?   // Average attack angle (degrees)
+  avgHandSpeed        Float?   // Average hand speed (mph or DK units)
+  avgTimeToContact    Float?   // Average time to contact (seconds)
+  dkSessionId         String?  // DK session identifier
+  barrelsScore        Float?   // Composite BARRELS score (0-100)
+  sequenceGrade       String?  // green, yellow, or red based on barrelsScore
+  dkSyncedAt          DateTime? // When DK data was last synced
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([userId, podSlotId]) // One booking per user per slot
+  @@map("pod_bookings")
+  @@index([userId])
+  @@index([podSlotId])
+  @@index([status])
+}
+// ============================================================================
+// IMPORT SYSTEM MODELS (WO-IMPORT-01)
+// Smart HitTrax + Bat Sensor (Blast/DK) Import System
+// ============================================================================
+
+// ImportSession - Tracks each import operation (per-player or bulk)
+model ImportSession {
+  id                String   @id @default(uuid())
+  userId            String   // Coach/admin who initiated import
+  user              User     @relation("UserImportSessions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  importType        String   // "per_player" | "bulk"
+  sourceTypes       String[] // ["hittrax", "blast", "dk"]
+  
+  // File tracking
+  fileNames         String[] @db.Text
+  fileCount         Int      @default(0)
+  
+  // Statistics
+  totalSwings       Int      @default(0)
+  matchedSwings     Int      @default(0)
+  unmatchedSwings   Int      @default(0)
+  playersDetected   Int      @default(0)
+  
+  status            String   @default("processing") // "processing", "completed", "failed"
+  errorMessage      String?  @db.Text
+  
+  // Links to created data
+  hittraxSessions   HitTraxSession[] @relation("ImportHitTraxSessions")
+  sensorSwings      SensorSwing[]    @relation("ImportSensorSwings")
+  
+  createdAt         DateTime @default(now())
+  completedAt       DateTime?
+  
+  @@map("import_sessions")
+  @@index([userId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+// SensorSwing - Store bat sensor data (Blast, Diamond Kinetics)
+model SensorSwing {
+  id                String   @id @default(uuid())
+  
+  // Player assignment
+  userId            String?
+  user              User?    @relation("UserSensorSwings", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Session context
+  importSessionId   String?
+  importSession     ImportSession? @relation("ImportSensorSwings", fields: [importSessionId], references: [id], onDelete: Cascade)
+  
+  // Sensor metadata
+  sensorType        String   // "blast" | "diamond_kinetics"
+  sensorDeviceId    String?  // Device serial/ID
+  sensorTimestamp   DateTime // Original sensor timestamp
+  
+  // Matching to HitTrax
+  hittraxEventId    String?  @unique
+  hittraxEvent      HitTraxEvent? @relation(fields: [hittraxEventId], references: [id], onDelete: SetNull)
+  matchTimeDelta    Float?   // Milliseconds difference from match (if matched)
+  
+  // Core sensor metrics
+  batSpeed          Float?   // mph
+  attackAngle       Float?   // degrees
+  timeToContact     Float?   // milliseconds
+  peakHandSpeed     Float?   // mph
+  
+  // Blast-specific metrics
+  blastFactor       Float?   // Blast proprietary metric
+  powerOutput       Float?   // Watts
+  
+  // DK-specific metrics
+  rotationMetric    Float?   // DK rotation score
+  
+  // Raw data storage (for future use)
+  rawDataJson       Json?    // Full sensor payload
+  
+  // Assignment status
+  assigned          Boolean  @default(false)
+  assignedAt        DateTime?
+  assignedBy        String?  // Admin who assigned
+  
+  createdAt         DateTime @default(now())
+  
+  @@map("sensor_swings")
+  @@index([userId])
+  @@index([sensorTimestamp])
+  @@index([assigned])
+  @@index([sensorType])
+  @@index([hittraxEventId])
+  @@index([importSessionId])
+}

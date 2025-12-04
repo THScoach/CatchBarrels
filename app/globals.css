@@ -1,0 +1,197 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* BARRELS Design System - Spacing Scale */
+:root {
+  /* iOS safe area insets */
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+  
+  /* Spacing System */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-xxl: 48px;
+  
+  /* Brand Colors - BARRELS */
+  --barrels-gold: #E8B14E;
+  --barrels-gold-light: #F5C76E;
+  --barrels-black: #000000;
+  --barrels-dark-gray: #1A1A1A;
+  --barrels-light-gray: #D1D5DB;
+  --barrels-error: #DC2626;
+  --barrels-success: #22C55E;
+  
+  /* Animation Timing */
+  --transition-fast: 150ms;
+  --transition-base: 200ms;
+  --transition-slow: 300ms;
+}
+
+/* Minimum touch target size (44x44px for iOS) */
+@layer utilities {
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  
+  .touch-target-lg {
+    min-width: 48px;
+    min-height: 48px;
+  }
+}
+
+/* Smooth scrolling for mobile */
+@media (hover: none) and (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Optimize scroll performance */
+  .scroll-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+/* iOS-specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix for iOS Safari bottom bar */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Safe area padding */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+ 
+@layer base {
+  :root {
+    /* BARRELS Official Design System */
+    /* Philosophy: Dark backgrounds, gold accents, blue actions, white text */
+    
+    --background: 213 48% 3%; /* #05070B - Midnight black */
+    --foreground: 0 0% 100%; /* #FFFFFF - White */
+
+    --card: 218 44% 4.9%; /* #0B0F17 - Surface */
+    --card-foreground: 0 0% 100%;
+ 
+    --popover: 218 44% 4.9%;
+    --popover-foreground: 0 0% 100%;
+ 
+    --primary: 44 100% 62%; /* #FFC93C - Electric Gold */
+    --primary-foreground: 213 48% 3%; /* Dark bg text on gold */
+ 
+    --secondary: 218 100% 57%; /* #2979FF - Action Blue */
+    --secondary-foreground: 0 0% 100%;
+ 
+    --muted: 213 38% 12%; /* #1F2933 - Border gray */
+    --muted-foreground: 218 10% 71%; /* #B0B6C3 - Muted text */
+ 
+    --accent: 218 100% 57%; /* #2979FF - Action Blue */
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 84.2% 60.2%; /* #EF4444 - Danger */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 213 38% 12%; /* #1F2933 - Border */
+    --input: 213 38% 12%;
+    --ring: 44 100% 62%; /* Gold ring */
+ 
+    --radius: 1rem; /* 16px for rounded-2xl default */
+  }
+ 
+  .dark {
+    /* Dark mode uses same BARRELS theme (app is dark-first) */
+    --background: 213 48% 3%; /* #05070B */
+    --foreground: 0 0% 100%;
+ 
+    --card: 218 44% 4.9%; /* #0B0F17 */
+    --card-foreground: 0 0% 100%;
+ 
+    --popover: 218 44% 4.9%;
+    --popover-foreground: 0 0% 100%;
+ 
+    --primary: 44 100% 62%; /* #FFC93C */
+    --primary-foreground: 213 48% 3%;
+ 
+    --secondary: 218 100% 57%; /* #2979FF */
+    --secondary-foreground: 0 0% 100%;
+ 
+    --muted: 213 38% 12%;
+    --muted-foreground: 218 10% 71%;
+ 
+    --accent: 218 100% 57%;
+    --accent-foreground: 0 0% 100%;
+ 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+ 
+    --border: 213 38% 12%;
+    --input: 213 38% 12%;
+    --ring: 44 100% 62%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}

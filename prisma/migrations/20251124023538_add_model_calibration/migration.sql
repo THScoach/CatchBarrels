@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "User" ADD COLUMN "modelOverlayScale" DOUBLE PRECISION DEFAULT 1.0;
+ALTER TABLE "User" ADD COLUMN "modelOverlayOffsetX" INTEGER DEFAULT 0;
+ALTER TABLE "User" ADD COLUMN "modelOverlayOffsetY" INTEGER DEFAULT 0;

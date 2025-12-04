@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CatchBarrels Whop Branding Kit - Asset Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+      color: #E5E5E5;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 60px;
+      padding: 40px;
+      background: linear-gradient(135deg, #E8B14E 0%, #D4A447 100%);
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(232, 177, 78, 0.3);
+    }
+
+    h1 {
+      font-size: 3em;
+      font-weight: 900;
+      color: #000;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .subtitle {
+      font-size: 1.2em;
+      color: #1a1a1a;
+      font-weight: 600;
+    }
+
+    .intro {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+      border-left: 5px solid #E8B14E;
+    }
+
+    .intro h2 {
+      color: #E8B14E;
+      margin-bottom: 15px;
+      font-size: 1.8em;
+    }
+
+    .intro p {
+      font-size: 1.1em;
+      line-height: 1.8;
+      color: #ccc;
+    }
+
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 30px;
+      margin-bottom: 60px;
+    }
+
+    .asset-card {
+      background: #1a1a1a;
+      border-radius: 15px;
+      overflow: hidden;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      border: 2px solid #2a2a2a;
+    }
+
+    .asset-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 30px rgba(232, 177, 78, 0.2);
+      border-color: #E8B14E;
+    }
+
+    .asset-preview {
+      height: 300px;
+      background: #0a0a0a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .asset-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .asset-info {
+      padding: 25px;
+    }
+
+    .asset-info h3 {
+      color: #E8B14E;
+      font-size: 1.5em;
+      margin-bottom: 10px;
+      font-weight: 700;
+    }
+
+    .asset-details {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 15px 0;
+      padding: 15px;
+      background: #0a0a0a;
+      border-radius: 8px;
+    }
+
+    .detail-item {
+      font-size: 0.9em;
+    }
+
+    .detail-label {
+      color: #888;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      color: #E8B14E;
+      font-weight: 700;
+    }
+
+    .use-case {
+      background: #0a0a0a;
+      padding: 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      font-size: 0.95em;
+      border-left: 3px solid #3B9FE8;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #E8B14E 0%, #D4A447 100%);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #F5C05E 0%, #E0B157 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(232, 177, 78, 0.4);
+    }
+
+    .btn-secondary {
+      background: #2a2a2a;
+      color: #E8B14E;
+      border: 2px solid #E8B14E;
+    }
+
+    .btn-secondary:hover {
+      background: #E8B14E;
+      color: #000;
+    }
+
+    .quick-links {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+    }
+
+    .quick-links h2 {
+      color: #E8B14E;
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 15px;
+    }
+
+    .link-item {
+      background: #0a0a0a;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 4px solid #3B9FE8;
+    }
+
+    .link-item strong {
+      color: #E8B14E;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .link-item code {
+      background: #000;
+      padding: 8px;
+      border-radius: 4px;
+      display: block;
+      font-size: 0.85em;
+      color: #3B9FE8;
+      word-break: break-all;
+    }
+
+    .checklist {
+      background: #1a1a1a;
+      padding: 30px;
+      border-radius: 15px;
+      margin-bottom: 40px;
+    }
+
+    .checklist h2 {
+      color: #E8B14E;
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+
+    .checklist-item {
+      background: #0a0a0a;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .checklist-item input {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px;
+      background: #1a1a1a;
+      border-radius: 15px;
+      margin-top: 40px;
+    }
+
+    .footer p {
+      color: #888;
+      margin: 5px 0;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.8em;
+      font-weight: 700;
+      margin: 5px;
+    }
+
+    .badge-primary {
+      background: #E8B14E;
+      color: #000;
+    }
+
+    .badge-info {
+      background: #3B9FE8;
+      color: #fff;
+    }
+
+    @media (max-width: 768px) {
+      .asset-grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 2em;
+      }
+
+      .btn-group {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎨 CatchBarrels Whop Branding Kit</h1>
+      <p class="subtitle">Production-Ready Assets for Work Order #9</p>
+    </header>
+
+    <div class="intro">
+      <h2>📋 Work Order #9: Update Whop Product Branding</h2>
+      <p>
+        This page provides quick access to all CatchBarrels branding assets needed to update your 8 Whop products 
+        and the CatchBarrels app icon. All assets are production-ready, optimized, and follow the Momentum Transfer 
+        aesthetic with electric gold (#E8B14E) branding.
+      </p>
+      <div style="margin-top: 20px;">
+        <span class="badge badge-primary">8 Products to Update</span>
+        <span class="badge badge-info">1 App Icon to Replace</span>
+        <span class="badge badge-primary">6 Ready-to-Use Assets</span>
+      </div>
+    </div>
+
+    <h2 style="color: #E8B14E; font-size: 2.5em; margin: 40px 0 30px 0; text-align: center;">Branding Assets</h2>
+
+    <div class="asset-grid">
+      <!-- Asset 1: Product Thumbnail -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/branding/logo-mark-icon.png" alt="CatchBarrels Logo Icon">
+        </div>
+        <div class="asset-info">
+          <h3>🎯 Product Thumbnail (Primary)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Product card thumbnails, app icon, grid view
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">logo-mark-icon.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">412×412px</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">1:1 Square</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Size:</div>
+              <div class="detail-value">412 KB</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/branding/logo-mark-icon.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/branding/logo-mark-icon.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset 2: Horizontal Logo -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/branding/logo-horizontal.png" alt="CatchBarrels Horizontal Logo">
+        </div>
+        <div class="asset-info">
+          <h3>🎪 Product Banner (Horizontal)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Product detail headers, wide banner spaces
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">logo-horizontal.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">1200×300px</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">4:1 Wide</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Size:</div>
+              <div class="detail-value">412 KB</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/branding/logo-horizontal.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/branding/logo-horizontal.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset 3: Social Card -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/branding/social-card-default.png" alt="CatchBarrels Social Card">
+        </div>
+        <div class="asset-info">
+          <h3>📱 Social/OG Card (Wide)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Product sharing cards, wide promotional banners
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">social-card-default.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">1200×630px</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">1.91:1 OG</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Size:</div>
+              <div class="detail-value">412 KB</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/branding/social-card-default.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/branding/social-card-default.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset 4: App Icon -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/branding/logo-mark-icon.png" alt="CatchBarrels App Icon">
+        </div>
+        <div class="asset-info">
+          <h3>📦 App Icon (PWA)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Whop app icon in Developer Dashboard, member portal
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">logo-mark-icon.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">512×512px min</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">1:1 Square</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Replaces:</div>
+              <div class="detail-value">Green "C" icon</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/branding/logo-mark-icon.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/branding/logo-mark-icon.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset 5: Profile Picture -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/assets/social/profile/02_profile_with_text.png" alt="CatchBarrels Profile Picture">
+        </div>
+        <div class="asset-info">
+          <h3>👤 Profile Picture (With Text)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Company/product profile pictures
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">02_profile_with_text.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">400×400px</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">1:1 Square</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Size:</div>
+              <div class="detail-value">124 KB</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/assets/social/profile/02_profile_with_text.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/assets/social/profile/02_profile_with_text.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Asset 6: Hero Banner -->
+      <div class="asset-card">
+        <div class="asset-preview">
+          <img src="/assets/social/covers/03_youtube_channel_art.png" alt="CatchBarrels Hero Banner">
+        </div>
+        <div class="asset-info">
+          <h3>🎆 Hero Banner (Premium)</h3>
+          <div class="use-case">
+            <strong>Use For:</strong> Wide hero banners on product pages (optional)
+          </div>
+          <div class="asset-details">
+            <div class="detail-item">
+              <div class="detail-label">File:</div>
+              <div class="detail-value">03_youtube_channel_art.png</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Dimensions:</div>
+              <div class="detail-value">2560×1440px</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Aspect:</div>
+              <div class="detail-value">16:9</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">Size:</div>
+              <div class="detail-value">109 KB</div>
+            </div>
+          </div>
+          <div class="btn-group">
+            <a href="/assets/social/covers/03_youtube_channel_art.png" download class="btn btn-primary">Download</a>
+            <button onclick="copyURL('/assets/social/covers/03_youtube_channel_art.png')" class="btn btn-secondary">Copy URL</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-links">
+      <h2>🔗 Quick Reference CDN URLs</h2>
+      <div class="link-grid">
+        <div class="link-item">
+          <strong>Product Thumbnail:</strong>
+          <code>https://catchbarrels.app/branding/logo-mark-icon.png</code>
+        </div>
+        <div class="link-item">
+          <strong>Product Banner:</strong>
+          <code>https://catchbarrels.app/branding/logo-horizontal.png</code>
+        </div>
+        <div class="link-item">
+          <strong>Social Sharing:</strong>
+          <code>https://catchbarrels.app/branding/social-card-default.png</code>
+        </div>
+        <div class="link-item">
+          <strong>App Icon:</strong>
+          <code>https://catchbarrels.app/branding/logo-mark-icon.png</code>
+        </div>
+        <div class="link-item">
+          <strong>Profile Picture:</strong>
+          <code>https://catchbarrels.app/assets/social/profile/02_profile_with_text.png</code>
+        </div>
+        <div class="link-item">
+          <strong>Hero Banner:</strong>
+          <code>https://catchbarrels.app/assets/social/covers/03_youtube_channel_art.png</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="checklist">
+      <h2>✅ Products to Update</h2>
+      <div class="checklist-item">
+        <input type="checkbox" id="product1">
+        <label for="product1"><strong>BARRELS Pro</strong> ($99/month) - Thumbnail + Banner + App Icon</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product2">
+        <label for="product2"><strong>BARRELS Athlete</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product3">
+        <label for="product3"><strong>BARRELS Elite</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product4">
+        <label for="product4"><strong>90-Day Transformation</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product5">
+        <label for="product5"><strong>Standard In-Person Assessment</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product6">
+        <label for="product6"><strong>Pro Assessment + S2 Cognition</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product7">
+        <label for="product7"><strong>7-Day Challenge</strong> - Thumbnail + Banner</label>
+      </div>
+      <div class="checklist-item">
+        <input type="checkbox" id="product8">
+        <label for="product8"><strong>Free Swing Audit</strong> - Thumbnail + Banner</label>
+      </div>
+    </div>
+
+    <div class="footer">
+      <h3 style="color: #E8B14E; margin-bottom: 15px;">Work Order #9 - Complete Asset Kit</h3>
+      <p><strong>Implementation By:</strong> DeepAgent | <strong>Date:</strong> November 26, 2025</p>
+      <p><strong>Status:</strong> Assets Ready ✅ | Manual Upload Required</p>
+      <p><strong>Documentation:</strong> See <code>WO9_WHOP_BRANDING_UPDATE_GUIDE.md</code> for complete instructions</p>
+      <p style="margin-top: 20px; color: #E8B14E;">All assets are production-ready, optimized, and live at catchbarrels.app</p>
+    </div>
+  </div>
+
+  <script>
+    function copyURL(path) {
+      const fullURL = 'https://catchbarrels.app' + path;
+      navigator.clipboard.writeText(fullURL).then(() => {
+        alert('✅ URL copied to clipboard:\n' + fullURL);
+      }).catch(err => {
+        alert('❌ Failed to copy. Manual copy:\n' + fullURL);
+      });
+    }
+  </script>
+</body>
+</html>

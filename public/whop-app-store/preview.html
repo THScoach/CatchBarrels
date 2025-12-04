@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatchBarrels - Whop App Store Screenshots</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0A0A0A 0%, #1a1a1a 100%);
+            color: #FFFFFF;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #E8B14E 0%, #F4D06F 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            text-align: center;
+            color: #999;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+        .screenshots {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-bottom: 60px;
+        }
+        .screenshot-card {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .screenshot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 60px rgba(232, 177, 78, 0.2);
+        }
+        .screenshot-card h2 {
+            color: #E8B14E;
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+        .screenshot-card .caption {
+            color: #999;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        .screenshot-card img {
+            width: 100%;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        .features {
+            background: rgba(232, 177, 78, 0.1);
+            border-left: 4px solid #E8B14E;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .features h3 {
+            color: #E8B14E;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .features ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        .features li {
+            color: #ccc;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        .features li:before {
+            content: "•";
+            color: #E8B14E;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+        .info-section {
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 40px;
+            margin-top: 40px;
+        }
+        .info-section h2 {
+            color: #E8B14E;
+            margin-bottom: 20px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 20px;
+        }
+        .info-card {
+            background: rgba(232, 177, 78, 0.05);
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid rgba(232, 177, 78, 0.2);
+        }
+        .info-card h3 {
+            color: #E8B14E;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .info-card p, .info-card code {
+            color: #ccc;
+            line-height: 1.6;
+        }
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #E8B14E;
+        }
+        .download-btn {
+            display: inline-block;
+            background: linear-gradient(135deg, #E8B14E 0%, #F4D06F 100%);
+            color: #0A0A0A;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(232, 177, 78, 0.4);
+        }
+        .status-badge {
+            display: inline-block;
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        @media (max-width: 768px) {
+            .screenshots {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 CatchBarrels</h1>
+        <p class="subtitle">Whop App Store Submission Assets <span class="status-badge">✅ Ready</span></p>
+
+        <div class="screenshots">
+            <div class="screenshot-card">
+                <h2>📊 Screenshot 1: Dashboard</h2>
+                <p class="caption">"Track your hitting health with real-time biomechanical scores"</p>
+                <img src="screenshot-1-dashboard.png" alt="CatchBarrels Dashboard showing POWER, FLOW, and CONTACT scores">
+                <div class="features">
+                    <h3>Features Shown:</h3>
+                    <ul>
+                        <li>Three core metrics: POWER (85), FLOW (72), CONTACT (91)</li>
+                        <li>Traffic light summary with actionable insights</li>
+                        <li>Personalized 30-day training plan</li>
+                        <li>"Start New Session" CTA</li>
+                    </ul>
+                </div>
+                <a href="screenshot-1-dashboard.png" download class="download-btn">⬇️ Download</a>
+            </div>
+
+            <div class="screenshot-card">
+                <h2>🎥 Screenshot 2: Video Analysis</h2>
+                <p class="caption">"Get instant AI coaching on every swing with detailed biomechanical feedback"</p>
+                <img src="screenshot-2-video-analysis.png" alt="CatchBarrels Video Analysis with Coach Rick AI feedback">
+                <div class="features">
+                    <h3>Features Shown:</h3>
+                    <ul>
+                        <li>Video player with swing footage</li>
+                        <li>BARREL Score: 82/100 with detailed breakdown</li>
+                        <li>Coach Rick AI personalized insights</li>
+                        <li>Recommended drills based on analysis</li>
+                    </ul>
+                </div>
+                <a href="screenshot-2-video-analysis.png" download class="download-btn">⬇️ Download</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h2>📋 Submission Information</h2>
+            <div class="info-grid">
+                <div class="info-card">
+                    <h3>🎯 App Icon</h3>
+                    <p>Use: <code>/public/branding/logo-mark-icon.png</code></p>
+                    <p>Size: 512×512px</p>
+                </div>
+                <div class="info-card">
+                    <h3>🌐 Base URL</h3>
+                    <p><code>https://catchbarrels.app</code></p>
+                </div>
+                <div class="info-card">
+                    <h3>📂 Category</h3>
+                    <p>Sports & Fitness</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">(Secondary: Training & Coaching)</p>
+                </div>
+                <div class="info-card">
+                    <h3>📝 Description</h3>
+                    <p>AI-Powered Swing Analysis & Coaching. Transform your baseball swing with instant biomechanical analysis and personalized training plans.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section" style="margin-top: 40px;">
+            <h2>🚀 Next Steps</h2>
+            <ol style="color: #ccc; line-height: 2; padding-left: 20px;">
+                <li>Go to <a href="https://dev.whop.com/" target="_blank" style="color: #E8B14E;">Whop Developer Dashboard</a></li>
+                <li>Navigate to Apps → CatchBarrels → App Store tab</li>
+                <li>Upload the app icon from <code>/public/branding/logo-mark-icon.png</code></li>
+                <li>Upload both screenshots from this folder</li>
+                <li>Fill in the text fields (see <code>README.md</code> for full text)</li>
+                <li>Submit for review (24-48 hours)</li>
+                <li>Once approved, Whop SSO will work correctly!</li>
+            </ol>
+        </div>
+
+        <div style="text-align: center; margin-top: 60px; padding-top: 40px; border-top: 1px solid rgba(232, 177, 78, 0.2);">
+            <p style="color: #666; font-size: 0.9rem;">
+                Generated: November 28, 2024<br>
+                <strong style="color: #E8B14E;">CatchBarrels PWA</strong> | Whop Marketplace Submission
+            </p>
+        </div>
+    </div>
+</body>
+</html>

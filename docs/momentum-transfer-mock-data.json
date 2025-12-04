@@ -1,0 +1,313 @@
+{
+  "examples": [
+    {
+      "name": "Tiny (Pro / Big Dude)",
+      "description": "Elite professional hitter with smooth momentum transfer",
+      "data": {
+        "athleteId": "tiny_pro",
+        "videoId": "tiny_bp_01",
+        "level": "Pro",
+        "handedness": "R",
+        "momentumTransferScore": {
+          "overall": 91,
+          "label": "Elite",
+          "groundFlow": {
+            "score": 88,
+            "label": "Advanced",
+            "submetrics": {
+              "loadToLaunchTimingMs": 230,
+              "pelvisAccelPattern": "smooth",
+              "rearLegSupportQuality": 0.9,
+              "weightShiftPercent": 0.88
+            }
+          },
+          "powerFlow": {
+            "score": 95,
+            "label": "Elite",
+            "submetrics": {
+              "pelvisToTorsoDelayMs": 36,
+              "torsoToHandsDelayMs": 40,
+              "sequenceOrder": ["ground", "pelvis", "torso", "hands", "barrel"],
+              "torsoRotationQuality": 0.96
+            }
+          },
+          "barrelFlow": {
+            "score": 90,
+            "label": "Elite",
+            "submetrics": {
+              "handPathEfficiency": 1.08,
+              "barrelLaunchDirection": "on-plane",
+              "contactWhipQuality": 0.93
+            }
+          },
+          "dataQuality": {
+            "poseConfidence": 0.9,
+            "cameraAngleOK": true,
+            "framesUsed": 140
+          },
+          "goatyBand": 3,
+          "goatyBandLabel": "Elite"
+        }
+      },
+      "expectedCoaching": {
+        "summary": "Your Momentum Transfer Score is 91, which puts you in the Elite range.",
+        "biggestEdge": "Power Flow",
+        "biggestOpportunity": "Ground Flow (minor refinement)",
+        "keyFocus": "Lock down rear leg support a fraction longer"
+      }
+    },
+    {
+      "name": "14-Year-Old (Youth)",
+      "description": "Developing youth hitter with ground flow leak",
+      "data": {
+        "athleteId": "youth_14u",
+        "videoId": "youth_game_01",
+        "level": "14U",
+        "handedness": "R",
+        "momentumTransferScore": {
+          "overall": 68,
+          "label": "Developing",
+          "groundFlow": {
+            "score": 62,
+            "label": "Developing",
+            "submetrics": {
+              "loadToLaunchTimingMs": 190,
+              "pelvisAccelPattern": "rushed",
+              "rearLegSupportQuality": 0.65,
+              "weightShiftPercent": 0.6
+            }
+          },
+          "powerFlow": {
+            "score": 72,
+            "label": "Average",
+            "submetrics": {
+              "pelvisToTorsoDelayMs": 24,
+              "torsoToHandsDelayMs": 30,
+              "sequenceOrder": ["ground", "pelvis", "hands", "torso", "barrel"],
+              "torsoRotationQuality": 0.72
+            }
+          },
+          "barrelFlow": {
+            "score": 70,
+            "label": "Average",
+            "submetrics": {
+              "handPathEfficiency": 1.35,
+              "barrelLaunchDirection": "slightly-pully",
+              "contactWhipQuality": 0.68
+            }
+          },
+          "dataQuality": {
+            "poseConfidence": 0.82,
+            "cameraAngleOK": true,
+            "framesUsed": 110
+          },
+          "goatyBand": 0,
+          "goatyBandLabel": "Developing"
+        }
+      },
+      "expectedCoaching": {
+        "summary": "Your Momentum Transfer Score is 68, which puts you in the Developing range.",
+        "biggestEdge": "Power Flow (best piece)",
+        "biggestOpportunity": "Ground Flow (rushing the load)",
+        "keyFocus": "Feel pressure in back leg longer before firing"
+      }
+    },
+    {
+      "name": "High School (Advanced)",
+      "description": "Advanced HS hitter with strong overall momentum",
+      "data": {
+        "athleteId": "athlete_123",
+        "videoId": "video_abc",
+        "level": "HS",
+        "handedness": "R",
+        "momentumTransferScore": {
+          "overall": 82,
+          "label": "Advanced",
+          "groundFlow": {
+            "score": 78,
+            "label": "Above Average",
+            "submetrics": {
+              "loadToLaunchTimingMs": 220,
+              "pelvisAccelPattern": "smooth",
+              "rearLegSupportQuality": 0.82,
+              "weightShiftPercent": 0.76
+            }
+          },
+          "powerFlow": {
+            "score": 88,
+            "label": "Advanced",
+            "submetrics": {
+              "pelvisToTorsoDelayMs": 38,
+              "torsoToHandsDelayMs": 42,
+              "sequenceOrder": ["ground", "pelvis", "torso", "hands", "barrel"],
+              "torsoRotationQuality": 0.9
+            }
+          },
+          "barrelFlow": {
+            "score": 80,
+            "label": "Above Average",
+            "submetrics": {
+              "handPathEfficiency": 1.15,
+              "barrelLaunchDirection": "on-plane",
+              "contactWhipQuality": 0.84
+            }
+          },
+          "dataQuality": {
+            "poseConfidence": 0.86,
+            "cameraAngleOK": true,
+            "framesUsed": 120
+          },
+          "goatyBand": 2,
+          "goatyBandLabel": "Advanced"
+        }
+      },
+      "expectedCoaching": {
+        "summary": "Your Momentum Transfer Score is 82, which puts you in the Advanced range.",
+        "biggestEdge": "Power Flow (textbook sequencing)",
+        "biggestOpportunity": "Ground Flow (can get more stable)",
+        "keyFocus": "Lock in rear leg support longer"
+      }
+    },
+    {
+      "name": "College (Above Average - Barrel Flow Leak)",
+      "description": "College hitter with strong ground/power but barrel inefficiency",
+      "data": {
+        "athleteId": "college_d1",
+        "videoId": "college_bp_01",
+        "level": "College",
+        "handedness": "L",
+        "momentumTransferScore": {
+          "overall": 79,
+          "label": "Above Average",
+          "groundFlow": {
+            "score": 84,
+            "label": "Above Average",
+            "submetrics": {
+              "loadToLaunchTimingMs": 225,
+              "pelvisAccelPattern": "smooth",
+              "rearLegSupportQuality": 0.88,
+              "weightShiftPercent": 0.82
+            }
+          },
+          "powerFlow": {
+            "score": 85,
+            "label": "Advanced",
+            "submetrics": {
+              "pelvisToTorsoDelayMs": 40,
+              "torsoToHandsDelayMs": 45,
+              "sequenceOrder": ["ground", "pelvis", "torso", "hands", "barrel"],
+              "torsoRotationQuality": 0.88
+            }
+          },
+          "barrelFlow": {
+            "score": 68,
+            "label": "Developing",
+            "submetrics": {
+              "handPathEfficiency": 1.42,
+              "barrelLaunchDirection": "cut-across",
+              "contactWhipQuality": 0.65
+            }
+          },
+          "dataQuality": {
+            "poseConfidence": 0.88,
+            "cameraAngleOK": true,
+            "framesUsed": 135
+          },
+          "goatyBand": 1,
+          "goatyBandLabel": "Above Average"
+        }
+      },
+      "expectedCoaching": {
+        "summary": "Your Momentum Transfer Score is 79, which puts you in the Above Average range.",
+        "biggestEdge": "Power Flow (advanced sequencing)",
+        "biggestOpportunity": "Barrel Flow (hands working too hard)",
+        "keyFocus": "Let the barrel snap late - catch the energy instead of forcing it"
+      }
+    },
+    {
+      "name": "MLB (Elite - All Systems Go)",
+      "description": "Elite MLB hitter with balanced, efficient momentum transfer",
+      "data": {
+        "athleteId": "mlb_allstar",
+        "videoId": "mlb_hr_01",
+        "level": "MLB",
+        "handedness": "R",
+        "momentumTransferScore": {
+          "overall": 96,
+          "label": "Elite",
+          "groundFlow": {
+            "score": 94,
+            "label": "Elite",
+            "submetrics": {
+              "loadToLaunchTimingMs": 235,
+              "pelvisAccelPattern": "smooth",
+              "rearLegSupportQuality": 0.95,
+              "weightShiftPercent": 0.9
+            }
+          },
+          "powerFlow": {
+            "score": 98,
+            "label": "Elite",
+            "submetrics": {
+              "pelvisToTorsoDelayMs": 38,
+              "torsoToHandsDelayMs": 42,
+              "sequenceOrder": ["ground", "pelvis", "torso", "hands", "barrel"],
+              "torsoRotationQuality": 0.98
+            }
+          },
+          "barrelFlow": {
+            "score": 95,
+            "label": "Elite",
+            "submetrics": {
+              "handPathEfficiency": 1.05,
+              "barrelLaunchDirection": "on-plane",
+              "contactWhipQuality": 0.96
+            }
+          },
+          "dataQuality": {
+            "poseConfidence": 0.92,
+            "cameraAngleOK": true,
+            "framesUsed": 150
+          },
+          "goatyBand": 3,
+          "goatyBandLabel": "Elite"
+        }
+      },
+      "expectedCoaching": {
+        "summary": "Your Momentum Transfer Score is 96, which is Elite.",
+        "biggestEdge": "Power Flow (big-league sequencing)",
+        "biggestOpportunity": "None - refinement and consistency",
+        "keyFocus": "Repeat this pattern under different pitch types"
+      }
+    }
+  ],
+  "testScenarios": [
+    {
+      "scenario": "Ground Flow Leak (Youth)",
+      "athleteLevel": "Youth",
+      "expectedIssue": "Rushed pelvis acceleration, weak rear leg support",
+      "expectedCoaching": "Slow down the load, feel pressure in back leg longer",
+      "useExample": "14-Year-Old (Youth)"
+    },
+    {
+      "scenario": "Barrel Flow Leak (College)",
+      "athleteLevel": "College",
+      "expectedIssue": "Inefficient hand path, weak whip at contact",
+      "expectedCoaching": "Let the barrel snap late, don't force it",
+      "useExample": "College (Above Average - Barrel Flow Leak)"
+    },
+    {
+      "scenario": "Elite Performance (Pro/MLB)",
+      "athleteLevel": "Pro/MLB",
+      "expectedIssue": "None - minor refinements only",
+      "expectedCoaching": "Maintain consistency, repeat pattern",
+      "useExample": "Tiny (Pro / Big Dude)"
+    }
+  ],
+  "usageInstructions": {
+    "testing": "Use these examples to test Coach Rick responses and UI rendering",
+    "development": "Copy-paste any example into API requests for realistic data",
+    "integration": "Wire these examples into DeepAgent for system prompt validation",
+    "uiDemo": "Use for dashboard mockups and component showcases"
+  }
+}

@@ -1,0 +1,167 @@
+[
+  {
+    "name": "Elite MLB Swing (Ohtani)",
+    "videoId": "mlb_ohtani_hr_01",
+    "athlete": {
+      "name": "Shohei Ohtani",
+      "level": "MLB",
+      "age": 30,
+      "bats": "L",
+      "throws": "R"
+    },
+    "scores": {
+      "momentumTransfer": {
+        "score": 94,
+        "goatyBand": 3,
+        "goatyLabel": "Elite",
+        "confidence": 0.93
+      },
+      "groundFlow": {
+        "score": 92,
+        "label": "Ground Flow",
+        "leakSeverity": "none"
+      },
+      "powerFlow": {
+        "score": 96,
+        "label": "Power Flow",
+        "leakSeverity": "none"
+      },
+      "barrelFlow": {
+        "score": 93,
+        "label": "Barrel Flow",
+        "leakSeverity": "none"
+      }
+    },
+    "timing": {
+      "abRatio": 1.37,
+      "loadDurationMs": 212,
+      "swingDurationMs": 155,
+      "sequenceOrder": ["pelvis", "torso", "hands", "bat"],
+      "segmentGapsMs": {
+        "pelvisToTorso": 38,
+        "torsoToHands": 43,
+        "handsToBat": 26
+      }
+    },
+    "flags": {
+      "mainLeak": "none",
+      "secondaryLeak": null,
+      "sequenceBroken": false
+    },
+    "coachSummary": {
+      "overall": "Your momentum transfer is 94, which is elite. The energy flows from the ground, through your body, into the barrel with almost no leaks.",
+      "leak": "There's no major leak here – your ground flow, power flow, and barrel flow are all playing in the right order.",
+      "nextStep": "The focus at this level is tiny refinements and repeating this pattern under different speeds and pitch types."
+    }
+  },
+  {
+    "name": "Average Youth Swing (14U)",
+    "videoId": "youth_14u_rhh_01",
+    "athlete": {
+      "name": "Jalen",
+      "level": "Youth",
+      "age": 14,
+      "bats": "R",
+      "throws": "R"
+    },
+    "scores": {
+      "momentumTransfer": {
+        "score": 68,
+        "goatyBand": 0,
+        "goatyLabel": "Average",
+        "confidence": 0.86
+      },
+      "groundFlow": {
+        "score": 61,
+        "label": "Ground Flow",
+        "leakSeverity": "moderate"
+      },
+      "powerFlow": {
+        "score": 73,
+        "label": "Power Flow",
+        "leakSeverity": "mild"
+      },
+      "barrelFlow": {
+        "score": 71,
+        "label": "Barrel Flow",
+        "leakSeverity": "mild"
+      }
+    },
+    "timing": {
+      "abRatio": 1.28,
+      "loadDurationMs": 195,
+      "swingDurationMs": 152,
+      "sequenceOrder": ["pelvis", "torso", "hands", "bat"],
+      "segmentGapsMs": {
+        "pelvisToTorso": 25,
+        "torsoToHands": 31,
+        "handsToBat": 21
+      }
+    },
+    "flags": {
+      "mainLeak": "groundFlow",
+      "secondaryLeak": "powerFlow",
+      "sequenceBroken": false
+    },
+    "coachSummary": {
+      "overall": "Your momentum transfer is 68, which is in the average range. You're creating speed, but there's still power left on the table as energy moves through your body.",
+      "leak": "The biggest leak is in your ground flow. Your base doesn't hold long enough for the hips to start the chain, so the upper body has to help too much.",
+      "nextStep": "Next step is learning to load into the ground and hold it so the hips can fire first and everything else can follow."
+    }
+  },
+  {
+    "name": "Advanced High School (17U)",
+    "videoId": "hs_17u_lhh_02",
+    "athlete": {
+      "name": "Marcus",
+      "level": "HS",
+      "age": 17,
+      "bats": "L",
+      "throws": "L"
+    },
+    "scores": {
+      "momentumTransfer": {
+        "score": 87,
+        "goatyBand": 2,
+        "goatyLabel": "Advanced",
+        "confidence": 0.89
+      },
+      "groundFlow": {
+        "score": 84,
+        "label": "Ground Flow",
+        "leakSeverity": "none"
+      },
+      "powerFlow": {
+        "score": 90,
+        "label": "Power Flow",
+        "leakSeverity": "none"
+      },
+      "barrelFlow": {
+        "score": 85,
+        "label": "Barrel Flow",
+        "leakSeverity": "mild"
+      }
+    },
+    "timing": {
+      "abRatio": 1.33,
+      "loadDurationMs": 205,
+      "swingDurationMs": 154,
+      "sequenceOrder": ["pelvis", "torso", "hands", "bat"],
+      "segmentGapsMs": {
+        "pelvisToTorso": 35,
+        "torsoToHands": 38,
+        "handsToBat": 23
+      }
+    },
+    "flags": {
+      "mainLeak": "barrelFlow",
+      "secondaryLeak": null,
+      "sequenceBroken": false
+    },
+    "coachSummary": {
+      "overall": "Your momentum transfer is 87, which is advanced. You're creating great flow through the body, with just a small leak in the final piece.",
+      "leak": "Your barrel flow isn't quite catching the wave of energy from the core. Your hands and bat are slightly off path or mistimed.",
+      "nextStep": "Next step: Learn to let the barrel snap late so it catches the energy instead of forcing it."
+    }
+  }
+]
