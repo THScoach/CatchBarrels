@@ -34,8 +34,8 @@ export async function GET(req: NextRequest) {
 
     // Transform to simplified format for charts
     const assessments = sessions
-      .filter((s) => s.report?.metrics) // Only include sessions with calculated metrics
-      .map((session) => ({
+      .filter((s: any) => s.report?.metrics) // Only include sessions with calculated metrics
+      .map((session: any) => ({
         id: session.id,
         sessionName: session.sessionName,
         createdAt: session.createdAt.toISOString(),
