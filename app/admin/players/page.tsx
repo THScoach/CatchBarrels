@@ -40,7 +40,7 @@ export default async function PlayersPage() {
 
   // Get last session date for each player
   const playersWithSessions = await Promise.all(
-    players.map(async (player) => {
+    players.map(async (player: any) => {
       const lastVideo = await prisma.video.findFirst({
         where: { userId: player.id },
         orderBy: { uploadDate: 'desc' },
