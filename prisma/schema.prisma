@@ -88,6 +88,8 @@ model User {
   videos          Video[]
   drillProgress   DrillProgress[]
   assessments     Assessment[]
+  playerAssessments PlayerAssessment[] @relation("UserPlayerAssessments")
+  createdAssessments PlayerAssessment[] @relation("AdminCreatedAssessments")
   assessmentSessions AssessmentSession[] @relation("UserAssessmentSessions")
   timingSessions  TimingSession[] @relation("UserTimingSessions")
   s2Reports       S2CognitionReport[] @relation("UserS2Reports")
@@ -482,6 +484,61 @@ model CourseTag {
   
   @@unique([courseId, tag])
   @@index([tag])
+}
+
+// ============================================================================
+// Player Assessment - Core System Identity & Training Direction
+// This is the ENFORCED assessment system that gates all coaching access
+// ============================================================================
+model PlayerAssessment {
+  id                    String    @id @default(uuid())
+  
+  // Athlete Reference
+  athleteId             String
+  athlete               User      @relation("UserPlayerAssessments", fields: [athleteId], references: [id], onDelete: Cascade)
+  
+  // Admin Reference (Coach Rick)
+  createdBy             String
+  createdByUser         User      @relation("AdminCreatedAssessments", fields: [createdBy], references: [id], onDelete: Restrict)
+  
+  // Assessment Type & Confidence
+  assessmentType        String    // "manual_in_person" | "automated_onboarding"
+  confidenceLevel       String    // "automated" | "coach_verified" | "reboot_verified"
+  
+  // Core System Identity (LOCKED once reboot_verified)
+  swingIdentity         String?   // "Spinner" | "Whipper" | "Slingshot" | "Titan"
+  identityLocked        Boolean   @default(false)
+  
+  // Training Constraints (What NOT to chase)
+  constraints           String?   @db.Text // Coach-clear language
+  constraintsJson       Json?     // Optional structured format
+  
+  // Primary Training Lane
+  primaryTrainingLane   String?   // "Pods" | "1:1" | "Remote"
+  
+  // Baseline Metrics (from Reboot Motion or manual entry)
+  baselineMetrics       Json?     // {batSpeed, peakHandSpeed, rotationalVelocity, etc.}
+  
+  // Coach System Statement (displayed to athlete)
+  coachSystemStatement  String?   @db.Text
+  
+  // Status Workflow
+  status                String    @default("not_started") // "not_started" | "in_progress" | "automated_review_pending" | "coach_verified" | "reboot_verified"
+  
+  // Reboot Motion Data Files (references/URLs)
+  rebootMotionFiles     Json?     // [{fileName, fileUrl, fileType: "csv|json|pdf", uploadedAt}]
+  
+  // Admin Notes (internal only)
+  notes                 String?   @db.Text
+  
+  // Timestamps
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  
+  @@index([athleteId])
+  @@index([status])
+  @@index([createdBy])
+  @@map("player_assessments")
 }
 
 // Assessment Results (Comprehensive S2 + Biomechanical + Contact Quality)
