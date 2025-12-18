@@ -15,6 +15,8 @@ import { HelpBeacon } from '@/components/help/HelpBeacon'
 import { FTUEModal } from '@/components/onboarding/ftue-modal'
 import { MembershipUsageCard } from '@/components/membership-usage-card'
 import { type MembershipTier } from '@/lib/membership-tiers'
+import { YourSystemToday } from '@/components/assessment/your-system-today'
+import { PlayerAssessment } from '@/types/player-assessment'
 
 interface DashboardClientProps {
   user: any
@@ -25,6 +27,7 @@ interface DashboardClientProps {
     vipExpiresAt: Date | null
     vipActive: boolean
   }
+  playerAssessment?: PlayerAssessment | null
 }
 
 export default function DashboardClient({
@@ -32,6 +35,7 @@ export default function DashboardClient({
   summary,
   membershipInfo,
   vipOfferInfo,
+  playerAssessment,
 }: DashboardClientProps) {
   const router = useRouter()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
@@ -71,6 +75,14 @@ export default function DashboardClient({
         
         {/* Header Strip */}
         <HeaderStrip user={user} membershipInfo={membershipInfo} />
+
+        {/* Your System Today (if assessment completed) */}
+        {playerAssessment && (
+          playerAssessment.status === 'coach_verified' || 
+          playerAssessment.status === 'reboot_verified'
+        ) && (
+          <YourSystemToday assessment={playerAssessment} />
+        )}
 
         {/* VIP Banner (if active) */}
         {vipOfferInfo.vipActive && vipOfferInfo.vipExpiresAt && (

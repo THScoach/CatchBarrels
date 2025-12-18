@@ -57,12 +57,32 @@ export default async function DashboardPage() {
     vipActive: user?.assessmentVipActive || false,
   };
 
+  // Get player assessment (if exists)
+  const playerAssessment = await prisma.playerAssessment.findFirst({
+    where: {
+      athleteId: (session.user as any).id,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+    include: {
+      createdByUser: {
+        select: {
+          id: true,
+          name: true,
+          username: true,
+        },
+      },
+    },
+  });
+
   return (
     <DashboardClient 
       user={user}
       summary={summary}
       membershipInfo={membershipInfo}
       vipOfferInfo={vipOfferInfo}
+      playerAssessment={playerAssessment as any}
     />
   );
 }
