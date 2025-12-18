@@ -1,15 +1,20 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { PrismaClient } from '@prisma/client';
+
+// Create Prisma client for middleware
+const prisma = new PrismaClient();
 
 /**
- * Global Middleware for Authentication & Product Gating
+ * Global Middleware for Authentication, Product Gating & Assessment Enforcement
  * 
  * Rules:
- * 1. If authenticated + has product → allow access
- * 2. If authenticated + no product → redirect to purchase
- * 3. If not authenticated + public path → allow
- * 4. If not authenticated + protected path → save target and redirect to login
+ * 1. If authenticated + has product + has assessment → allow access
+ * 2. If authenticated + has product + no assessment → redirect to assessment-required
+ * 3. If authenticated + no product → redirect to purchase
+ * 4. If not authenticated + public path → allow
+ * 5. If not authenticated + protected path → save target and redirect to login
  */
 export async function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
@@ -123,6 +128,7 @@ export async function middleware(request: NextRequest) {
       '/profile',
       '/welcome',
       '/purchase-required', // CRITICAL: Don't redirect purchase-required to itself!
+      '/assessment-required', // Allow access to assessment required page
     ];
     
     const isExempt = exemptPaths.some(path => pathname.startsWith(path));
@@ -131,6 +137,59 @@ export async function middleware(request: NextRequest) {
       const purchaseUrl = new URL('/purchase-required', request.url);
       purchaseUrl.searchParams.set('return', pathname + search);
       return NextResponse.redirect(purchaseUrl);
+    }
+  }
+
+  // ============================================
+  // ASSESSMENT ENFORCEMENT (Players only)
+  // Check if player has completed assessment before accessing protected routes
+  // ============================================
+  if (!isAdmin && hasProduct) {
+    // Paths that don't require assessment
+    const assessmentExemptPaths = [
+      '/onboarding',
+      '/profile',
+      '/welcome',
+      '/purchase-required',
+      '/assessment-required', // CRITICAL: Don't redirect assessment-required to itself!
+    ];
+    
+    const isAssessmentExempt = assessmentExemptPaths.some(path => pathname.startsWith(path));
+    
+    // Only check assessment for protected routes
+    if (!isAssessmentExempt && pathname !== '/') {
+      try {
+        // Check if user has a completed assessment
+        const assessment = await prisma.playerAssessment.findFirst({
+          where: {
+            athleteId: (token as any).id,
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+          select: {
+            status: true,
+          },
+        });
+
+        const isCompleted = assessment && (
+          assessment.status === 'coach_verified' || 
+          assessment.status === 'reboot_verified'
+        );
+
+        if (!isCompleted) {
+          console.log('[Middleware] No completed assessment - redirecting to assessment-required');
+          const assessmentUrl = new URL('/assessment-required', request.url);
+          assessmentUrl.searchParams.set('return', pathname + search);
+          return NextResponse.redirect(assessmentUrl);
+        }
+
+        console.log('[Middleware] Assessment verified - allowing access');
+      } catch (error) {
+        console.error('[Middleware] Error checking assessment:', error);
+        // On error, allow access to prevent blocking users
+        // This is a fail-open approach for reliability
+      }
     }
   }
 
