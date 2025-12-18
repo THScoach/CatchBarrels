@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
-import EditAssessmentClient from './edit-assessment-client';
+import EditAssessmentEnhancedClient from './edit-assessment-enhanced-client';
 
 export default async function EditAssessmentPage({
   params,
@@ -22,7 +22,7 @@ export default async function EditAssessmentPage({
     redirect('/dashboard');
   }
 
-  // Get assessment
+  // Get assessment with history
   const assessment = await prisma.playerAssessment.findUnique({
     where: { id: params.id },
     include: {
@@ -41,6 +41,20 @@ export default async function EditAssessmentPage({
           username: true,
         },
       },
+      history: {
+        orderBy: {
+          createdAt: 'desc',
+        },
+        include: {
+          changedByUser: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -48,5 +62,5 @@ export default async function EditAssessmentPage({
     redirect('/admin/player-assessments');
   }
 
-  return <EditAssessmentClient assessment={assessment as any} />;
+  return <EditAssessmentEnhancedClient assessment={assessment as any} />;
 }
