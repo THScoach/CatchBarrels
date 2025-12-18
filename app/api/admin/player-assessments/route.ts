@@ -2,8 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 
 export const dynamic = 'force-dynamic';
+
+// Type for assessment with included relations
+type AssessmentWithRelations = Prisma.PlayerAssessmentGetPayload<{
+  include: {
+    athlete: {
+      select: {
+        id: true;
+        name: true;
+        username: true;
+        email: true;
+      };
+    };
+    createdByUser: {
+      select: {
+        id: true;
+        name: true;
+        username: true;
+      };
+    };
+  };
+}>;
 
 /**
  * GET /api/admin/player-assessments
@@ -70,15 +92,31 @@ export async function GET(request: NextRequest) {
     });
 
     // Create a map of athleteId to their latest assessment
-    const assessmentsByAthlete = new Map();
-    assessments.forEach((assessment) => {
+    const assessmentsByAthlete = new Map<string, AssessmentWithRelations>();
+    assessments.forEach((assessment: AssessmentWithRelations) => {
       if (!assessmentsByAthlete.has(assessment.athleteId)) {
         assessmentsByAthlete.set(assessment.athleteId, assessment);
       }
     });
 
+    // Type for user from the query
+    type AthleteData = {
+      id: string;
+      name: string | null;
+      username: string;
+      email: string | null;
+      createdAt: Date;
+    };
+
+    // Type for enriched athlete with assessment data
+    type EnrichedAthlete = AthleteData & {
+      assessment: AssessmentWithRelations | null;
+      hasAssessment: boolean;
+      isCompleted: boolean;
+    };
+
     // Create enriched athlete list with assessment status
-    const enrichedAthletes = allAthletes.map((athlete) => {
+    const enrichedAthletes: EnrichedAthlete[] = allAthletes.map((athlete: AthleteData) => {
       const assessment = assessmentsByAthlete.get(athlete.id);
       return {
         ...athlete,
@@ -93,8 +131,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       athletes: enrichedAthletes,
       totalAthletes: enrichedAthletes.length,
-      withAssessments: enrichedAthletes.filter((a) => a.hasAssessment).length,
-      completed: enrichedAthletes.filter((a) => a.isCompleted).length,
+      withAssessments: enrichedAthletes.filter((a: EnrichedAthlete) => a.hasAssessment).length,
+      completed: enrichedAthletes.filter((a: EnrichedAthlete) => a.isCompleted).length,
     });
   } catch (error) {
     console.error('Error fetching player assessments:', error);
