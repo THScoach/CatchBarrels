@@ -44,6 +44,21 @@ export async function GET(
             username: true,
           },
         },
+        // Include history for admin users only
+        history: isAdmin ? {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            changedByUser: {
+              select: {
+                id: true,
+                name: true,
+                username: true,
+              },
+            },
+          },
+        } : false,
       },
     });
 
@@ -72,6 +87,7 @@ export async function GET(
 /**
  * PATCH /api/player-assessment/[id]
  * Update assessment (admin only)
+ * Includes history tracking and data authority enforcement
  */
 export async function PATCH(
   request: NextRequest,
@@ -85,6 +101,7 @@ export async function PATCH(
     }
 
     const userRole = (session.user as any).role || 'player';
+    const userId = (session.user as any).id;
     const isAdmin = userRole === 'admin' || userRole === 'coach';
 
     if (!isAdmin) {
@@ -109,42 +126,99 @@ export async function PATCH(
       );
     }
 
-    // Prepare update data
+    // Data Authority Enforcement
+    // If swing identity is locked and user is trying to change it, reject unless explicitly unlocking
+    if (existingAssessment.identityLocked && body.swingIdentity !== undefined && body.identityLocked !== false) {
+      return NextResponse.json(
+        { error: 'Swing identity is locked. Unlock it first to make changes.' },
+        { status: 400 }
+      );
+    }
+
+    // Track changes for history
+    const previousValues: Record<string, any> = {};
+    const newValues: Record<string, any> = {};
+    const changeTypes: string[] = [];
+
+    // Prepare update data and track changes
     const updateData: any = {};
 
     if (body.assessmentType !== undefined) {
       updateData.assessmentType = body.assessmentType;
     }
-    if (body.confidenceLevel !== undefined) {
+    
+    if (body.confidenceLevel !== undefined && body.confidenceLevel !== existingAssessment.confidenceLevel) {
       updateData.confidenceLevel = body.confidenceLevel;
+      previousValues.confidenceLevel = existingAssessment.confidenceLevel;
+      newValues.confidenceLevel = body.confidenceLevel;
+      changeTypes.push('confidence_updated');
     }
-    if (body.swingIdentity !== undefined) {
+    
+    if (body.swingIdentity !== undefined && body.swingIdentity !== existingAssessment.swingIdentity) {
       updateData.swingIdentity = body.swingIdentity;
+      previousValues.swingIdentity = existingAssessment.swingIdentity;
+      newValues.swingIdentity = body.swingIdentity;
+      changeTypes.push('swing_identity_updated');
     }
-    if (body.identityLocked !== undefined) {
+    
+    if (body.identityLocked !== undefined && body.identityLocked !== existingAssessment.identityLocked) {
       updateData.identityLocked = body.identityLocked;
+      previousValues.identityLocked = existingAssessment.identityLocked;
+      newValues.identityLocked = body.identityLocked;
+      changeTypes.push(body.identityLocked ? 'identity_locked' : 'identity_unlocked');
     }
-    if (body.constraints !== undefined) {
+    
+    if (body.constraints !== undefined && body.constraints !== existingAssessment.constraints) {
       updateData.constraints = body.constraints;
+      previousValues.constraints = existingAssessment.constraints;
+      newValues.constraints = body.constraints;
+      changeTypes.push('constraints_updated');
     }
+    
     if (body.constraintsJson !== undefined) {
       updateData.constraintsJson = body.constraintsJson;
     }
-    if (body.primaryTrainingLane !== undefined) {
+    
+    if (body.primaryTrainingLane !== undefined && body.primaryTrainingLane !== existingAssessment.primaryTrainingLane) {
       updateData.primaryTrainingLane = body.primaryTrainingLane;
+      previousValues.primaryTrainingLane = existingAssessment.primaryTrainingLane;
+      newValues.primaryTrainingLane = body.primaryTrainingLane;
+      changeTypes.push('training_lane_updated');
     }
+    
     if (body.baselineMetrics !== undefined) {
       updateData.baselineMetrics = body.baselineMetrics;
     }
-    if (body.coachSystemStatement !== undefined) {
+    
+    if (body.coachSystemStatement !== undefined && body.coachSystemStatement !== existingAssessment.coachSystemStatement) {
       updateData.coachSystemStatement = body.coachSystemStatement;
+      previousValues.coachSystemStatement = existingAssessment.coachSystemStatement;
+      newValues.coachSystemStatement = body.coachSystemStatement;
+      changeTypes.push('system_statement_updated');
     }
-    if (body.status !== undefined) {
+    
+    if (body.status !== undefined && body.status !== existingAssessment.status) {
       updateData.status = body.status;
+      previousValues.status = existingAssessment.status;
+      newValues.status = body.status;
+      changeTypes.push('status_updated');
+      
+      // Special handling for reboot_verified status
+      if (body.status === 'reboot_verified') {
+        updateData.identityLocked = true; // Auto-lock identity when reboot verified
+        changeTypes.push('reboot_verified');
+        changeTypes.push('identity_locked');
+      }
     }
+    
     if (body.rebootMotionFiles !== undefined) {
       updateData.rebootMotionFiles = body.rebootMotionFiles;
     }
+    
+    if (body.rebootDerivedIdentityConfidence !== undefined) {
+      updateData.rebootDerivedIdentityConfidence = body.rebootDerivedIdentityConfidence;
+    }
+    
     if (body.notes !== undefined) {
       updateData.notes = body.notes;
     }
@@ -171,6 +245,24 @@ export async function PATCH(
         },
       },
     });
+
+    // Create history entries for each change type
+    if (changeTypes.length > 0) {
+      const historyNote = body.historyNote || null;
+      
+      for (const changeType of changeTypes) {
+        await prisma.assessmentHistory.create({
+          data: {
+            assessmentId: id,
+            changedBy: userId,
+            changeType,
+            previousValues,
+            newValues,
+            notes: historyNote,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({ assessment });
   } catch (error) {
