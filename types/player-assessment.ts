@@ -66,6 +66,7 @@ export interface PlayerAssessment {
   coachSystemStatement: string | null;
   status: AssessmentStatus;
   rebootMotionFiles: RebootMotionFile[] | null;
+  rebootDerivedIdentityConfidence: number | null; // 0-100 confidence score from Reboot Motion
   notes: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -82,6 +83,7 @@ export interface PlayerAssessment {
     name: string | null;
     username: string;
   };
+  history?: AssessmentHistory[]; // Assessment change history
 }
 
 // Assessment Creation Input (for API)
@@ -112,7 +114,9 @@ export interface UpdatePlayerAssessmentInput {
   coachSystemStatement?: string;
   status?: AssessmentStatus;
   rebootMotionFiles?: RebootMotionFile[];
+  rebootDerivedIdentityConfidence?: number;
   notes?: string;
+  historyNote?: string; // Optional note for this specific change
 }
 
 // Assessment Status Check Response
@@ -164,4 +168,86 @@ export function getStatusBadgeColor(status: AssessmentStatus): string {
     default:
       return 'bg-gray-500';
   }
+}
+
+// ============================================================================
+// ASSESSMENT HISTORY TYPES
+// ============================================================================
+
+// Assessment Change Type
+export type AssessmentChangeType =
+  | 'created'
+  | 'swing_identity_updated'
+  | 'confidence_updated'
+  | 'status_updated'
+  | 'constraints_updated'
+  | 'training_lane_updated'
+  | 'system_statement_updated'
+  | 'reboot_verified'
+  | 'reboot_files_uploaded'
+  | 'identity_locked'
+  | 'identity_unlocked';
+
+// Assessment History Entry
+export interface AssessmentHistory {
+  id: string;
+  assessmentId: string;
+  changedBy: string;
+  changeType: AssessmentChangeType;
+  previousValues: Record<string, any> | null;
+  newValues: Record<string, any> | null;
+  notes: string | null;
+  createdAt: Date;
+  
+  // Optional relation
+  changedByUser?: {
+    id: string;
+    name: string | null;
+    username: string;
+  };
+}
+
+// Assessment History Creation Input
+export interface CreateAssessmentHistoryInput {
+  assessmentId: string;
+  changedBy: string;
+  changeType: AssessmentChangeType;
+  previousValues?: Record<string, any>;
+  newValues?: Record<string, any>;
+  notes?: string;
+}
+
+// Helper function to get change type display label
+export const CHANGE_TYPE_LABELS: Record<AssessmentChangeType, string> = {
+  created: 'Assessment Created',
+  swing_identity_updated: 'Swing Identity Updated',
+  confidence_updated: 'Confidence Level Updated',
+  status_updated: 'Status Updated',
+  constraints_updated: 'Constraints Updated',
+  training_lane_updated: 'Training Lane Updated',
+  system_statement_updated: 'System Statement Updated',
+  reboot_verified: 'Reboot Verified',
+  reboot_files_uploaded: 'Reboot Files Uploaded',
+  identity_locked: 'Identity Locked',
+  identity_unlocked: 'Identity Unlocked',
+};
+
+// Helper function to format history entry for display
+export function formatHistoryChange(history: AssessmentHistory): string {
+  const label = CHANGE_TYPE_LABELS[history.changeType];
+  
+  // Add specific details based on change type
+  if (history.changeType === 'swing_identity_updated') {
+    const prev = history.previousValues?.swingIdentity || 'None';
+    const newVal = history.newValues?.swingIdentity || 'None';
+    return `${label}: ${prev} → ${newVal}`;
+  }
+  
+  if (history.changeType === 'status_updated') {
+    const prev = history.previousValues?.status || 'None';
+    const newVal = history.newValues?.status || 'None';
+    return `${label}: ${STATUS_LABELS[prev as AssessmentStatus] || prev} → ${STATUS_LABELS[newVal as AssessmentStatus] || newVal}`;
+  }
+  
+  return label;
 }
