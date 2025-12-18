@@ -90,6 +90,7 @@ model User {
   assessments     Assessment[]
   playerAssessments PlayerAssessment[] @relation("UserPlayerAssessments")
   createdAssessments PlayerAssessment[] @relation("AdminCreatedAssessments")
+  assessmentHistory AssessmentHistory[] @relation("UserAssessmentHistory")
   assessmentSessions AssessmentSession[] @relation("UserAssessmentSessions")
   timingSessions  TimingSession[] @relation("UserTimingSessions")
   s2Reports       S2CognitionReport[] @relation("UserS2Reports")
@@ -528,6 +529,9 @@ model PlayerAssessment {
   // Reboot Motion Data Files (references/URLs)
   rebootMotionFiles     Json?     // [{fileName, fileUrl, fileType: "csv|json|pdf", uploadedAt}]
   
+  // Reboot-Derived Identity Confidence (0-100 score from Reboot Motion analysis)
+  rebootDerivedIdentityConfidence Float?  // Confidence score from Reboot Motion (0-100)
+  
   // Admin Notes (internal only)
   notes                 String?   @db.Text
   
@@ -535,10 +539,45 @@ model PlayerAssessment {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   
+  // Relations
+  history               AssessmentHistory[] @relation("AssessmentHistoryEntries")
+  
   @@index([athleteId])
   @@index([status])
   @@index([createdBy])
   @@map("player_assessments")
+}
+
+// ============================================================================
+// Assessment History - Track changes to player assessments over time
+// ============================================================================
+model AssessmentHistory {
+  id                    String    @id @default(uuid())
+  
+  // Assessment Reference
+  assessmentId          String
+  assessment            PlayerAssessment @relation("AssessmentHistoryEntries", fields: [assessmentId], references: [id], onDelete: Cascade)
+  
+  // Changed By (Coach/Admin)
+  changedBy             String
+  changedByUser         User      @relation("UserAssessmentHistory", fields: [changedBy], references: [id], onDelete: Restrict)
+  
+  // Change Details
+  changeType            String    // "created" | "swing_identity_updated" | "confidence_updated" | "status_updated" | "constraints_updated" | "training_lane_updated" | "system_statement_updated" | "reboot_verified" | "identity_locked" | "identity_unlocked"
+  
+  // Previous and New Values (JSON for flexibility)
+  previousValues        Json?     // {swingIdentity: "Spinner", confidenceLevel: "automated", ...}
+  newValues             Json?     // {swingIdentity: "Whipper", confidenceLevel: "coach_verified", ...}
+  
+  // Coach Notes for this change
+  notes                 String?   @db.Text
+  
+  // Timestamp
+  createdAt             DateTime  @default(now())
+  
+  @@index([assessmentId, createdAt])
+  @@index([changedBy])
+  @@map("assessment_history")
 }
 
 // Assessment Results (Comprehensive S2 + Biomechanical + Contact Quality)
